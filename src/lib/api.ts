@@ -56,3 +56,36 @@ export function convertImageToBase64(file: File): Promise<string> {
     reader.readAsDataURL(file);
   });
 }
+
+export async function downloadAllImagesAsZip(
+  images: { url: string; filename: string }[],
+  onProgress?: (packed: number, total: number) => void
+): Promise<void> {
+  const JSZip = (await import('jszip')).default;
+  const zip = new JSZip();
+  const folder = zip.folder('avni-studio-gallery')!;
+  let packed = 0;
+  const total = images.length;
+
+  await Promise.all(
+    images.map(async ({ url, filename }) => {
+      try {
+        const res = await fetch(url);
+        const blob = await res.blob();
+        folder.file(filename, blob);
+      } catch {
+        console.warn(`Skipped ${filename}`);
+      } finally {
+        packed++;
+        onProgress?.(packed, total);
+      }
+    })
+  );
+
+  const blob = await zip.generateAsync({ type: 'blob' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'avni-studio-gallery.zip';
+  a.click();
+  URL.revokeObjectURL(a.href);
+}
