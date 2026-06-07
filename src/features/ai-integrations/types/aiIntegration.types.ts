@@ -6,7 +6,8 @@ export type AIProvider =
   | 'huggingface'
   | 'grok'
   | 'qwen'
-  | 'comfyui';
+  | 'comfyui'
+  | 'onspace';
 
 export type AIFeature =
   | 'chat'
@@ -23,6 +24,8 @@ export type ProviderStatus =
   | 'rate_limited'
   | 'offline'
   | 'testing';
+
+export type StudioControlMode = 'fully_agentic' | 'half_manual' | 'fully_manual';
 
 // ─── Model ───────────────────────────────────────────────────────────
 export interface ModelOption {
@@ -93,6 +96,8 @@ export interface ProviderConfig {
 // ─── Global State ─────────────────────────────────────────────────────
 export interface AIIntegrationState {
   activeBotProvider: AIProvider;
+  studioControlMode: StudioControlMode;
+  onspaceAsFallback: boolean; // If true, OnSpace AI is used as last-resort fallback
   providers: Record<AIProvider, ProviderConfig>;
   globalDefaults: {
     generationFallback: AIProvider[];
@@ -103,6 +108,7 @@ export interface AIIntegrationState {
     maxFallbackAttempts: number;
     streamChatResponses: boolean;
     imageUploadStrategy: 'base64' | 'url' | 'direct';
+    debugMode: boolean;
   };
 }
 
@@ -117,6 +123,8 @@ export type AIIntegrationAction =
   | { type: 'SET_PROVIDER_STATUS'; provider: AIProvider; status: ProviderStatus; error?: string }
   | { type: 'SET_ACTIVE_BOT_PROVIDER'; provider: AIProvider }
   | { type: 'SET_ADVANCED'; settings: Partial<AIIntegrationState['advancedSettings']> }
+  | { type: 'SET_STUDIO_CONTROL_MODE'; mode: StudioControlMode }
+  | { type: 'SET_ONSPACE_FALLBACK'; enabled: boolean }
   | { type: 'HYDRATE_SETTINGS'; payload: AIIntegrationState };
 
 // ─── Route Request / Response ─────────────────────────────────────────
@@ -139,6 +147,8 @@ export interface AIRouteResponse {
   output: unknown;
   usedFallback: boolean;
   error?: string;
+  imageUrl?: string;
+  text?: string;
 }
 
 // ─── Provider Client Interface ────────────────────────────────────────

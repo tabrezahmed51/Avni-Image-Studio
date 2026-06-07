@@ -1,14 +1,15 @@
 import { create } from 'zustand';
 import { persist } from 'zustand/middleware';
 import type {
-  AIIntegrationState, AIIntegrationAction, AIProvider, AIFeature,
-  ProviderAuthConfig, ProviderEndpointConfig, ProviderStatus,
+  AIIntegrationState, AIIntegrationAction, AIProvider,
 } from '../types/aiIntegration.types';
 import { providerRegistry } from '../services/providerRegistry';
 
 // ─── Default state ────────────────────────────────────────────────────
 export const defaultAIIntegrationState: AIIntegrationState = {
   activeBotProvider: 'gemini',
+  studioControlMode: 'half_manual',
+  onspaceAsFallback: false, // OFF by default — user must opt-in
   globalDefaults: {
     generationFallback: ['openrouter', 'gemini', 'openai'],
     editingFallback: ['openrouter', 'gemini', 'qwen'],
@@ -18,6 +19,7 @@ export const defaultAIIntegrationState: AIIntegrationState = {
     maxFallbackAttempts: 3,
     streamChatResponses: false,
     imageUploadStrategy: 'base64',
+    debugMode: false,
   },
   providers: {
     openrouter: {
@@ -64,6 +66,18 @@ export const defaultAIIntegrationState: AIIntegrationState = {
       auth: { apiKey: '' },
       settings: { enabled: false, preferredModelByFeature: {}, fallbackPriorityByFeature: {}, status: 'not_configured' },
     } as AIIntegrationState['providers']['comfyui'],
+    // OnSpace as a named provider (always present, used as optional fallback)
+    onspace: {
+      provider: 'onspace', label: 'OnSpace AI (Built-in)',
+      auth: {},
+      endpoints: {},
+      capabilities: {
+        chat: true, text_to_image: true, image_to_image: false,
+        image_edit: true, prompt_enhance: true, inspire: true,
+      },
+      models: [],
+      settings: { enabled: true, preferredModelByFeature: {}, fallbackPriorityByFeature: {}, status: 'connected' },
+    } as AIIntegrationState['providers']['onspace'],
   },
 };
 
@@ -136,7 +150,7 @@ function reducer(state: AIIntegrationState, action: AIIntegrationAction): AIInte
               ...state.providers[action.provider].settings,
               status: action.status,
               ...(action.error !== undefined ? { lastError: action.error } : {}),
-              ...(action.status === 'connected' ? { lastTestedAt: new Date().toISOString() } : {}),
+              ...(action.status === 'connected' ? { lastTestedAt: new Date().toISOString(), lastError: undefined } : {}),
             },
           },
         },
@@ -152,6 +166,10 @@ function reducer(state: AIIntegrationState, action: AIIntegrationAction): AIInte
         ...state,
         advancedSettings: { ...state.advancedSettings, ...action.settings },
       };
+    case 'SET_STUDIO_CONTROL_MODE':
+      return { ...state, studioControlMode: action.mode };
+    case 'SET_ONSPACE_FALLBACK':
+      return { ...state, onspaceAsFallback: action.enabled };
     case 'HYDRATE_SETTINGS':
       return action.payload;
     default:
@@ -176,8 +194,13 @@ export const useAIIntegrationStore = create<AIIntegrationStore>()(
         set(() => ({ state: defaultAIIntegrationState })),
     }),
     {
-      name: 'avni-ai-integrations',
+      name: 'avni-ai-integrations-v2',
       partialize: (s) => ({ state: s.state }),
     }
   )
 );
+
+// ─── Helper: get store state outside React (for api.ts) ───────────────
+export function getAIIntegrationState(): AIIntegrationState {
+  return useAIIntegrationStore.getState().state;
+}

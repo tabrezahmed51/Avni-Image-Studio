@@ -394,6 +394,9 @@ export default function HomePage() {
         setActiveTab(action.payload === 'edit' ? 'edit' : 'generate');
         document.getElementById('generator')?.scrollIntoView({ behavior: 'smooth' });
         break;
+      case 'open_settings':
+        setSettingsOpen(true);
+        break;
     }
   }, []);
 
@@ -520,7 +523,11 @@ export default function HomePage() {
       <AIIntegrationsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
 
       {/* Avni AI Chat */}
-      <AvniAIChat currentPrompt={prompt} onAction={handleAvniAction} />
+      <AvniAIChat
+        currentPrompt={prompt}
+        onAction={handleAvniAction}
+        onTriggerGenerate={handleGenerate}
+      />
 
       {/* ── NAV ── */}
       <nav className="fixed top-0 left-0 right-0 z-50 glass-card border-b border-border/30 px-4 sm:px-6 py-3">

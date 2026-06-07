@@ -6,6 +6,7 @@ interface AdvancedSettingsPanelProps {
     maxFallbackAttempts?: number;
     streamChatResponses?: boolean;
     imageUploadStrategy?: 'base64' | 'url' | 'direct';
+    debugMode?: boolean;
   }) => void;
 }
 

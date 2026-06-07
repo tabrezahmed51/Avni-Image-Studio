@@ -1,52 +1,180 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
-import { X, Send, Sparkles, Bot, User, Loader2, ChevronDown, Wand2 } from 'lucide-react';
+import {
+  X, Send, Sparkles, Bot, User, Loader2, ChevronDown, Wand2,
+  Zap, Settings, Info, AlertTriangle, CheckCircle2, Brain,
+} from 'lucide-react';
 import { supabase } from '@/lib/api';
 import { FunctionsHttpError } from '@supabase/supabase-js';
+import { chatViaProvider, hasConfiguredExternalProvider } from '@/lib/providerApi';
+import { getAIIntegrationState } from '@/features/ai-integrations/store/aiIntegrationStore';
+import { useAIIntegrationStore } from '@/features/ai-integrations/store/aiIntegrationStore';
 import { toast } from 'sonner';
 
 export interface AvniAction {
-  type: 'fill_prompt' | 'navigate' | 'set_style' | 'set_aspect_ratio' | 'open_history' | 'switch_tab';
+  type: 'fill_prompt' | 'navigate' | 'set_style' | 'set_aspect_ratio' | 'open_history' | 'switch_tab' | 'open_settings' | 'trigger_generate';
   payload: string | boolean;
 }
 
 interface AvniAIChatProps {
   currentPrompt: string;
   onAction: (action: AvniAction) => void;
+  onTriggerGenerate?: () => void;
 }
 
 interface ChatMessage {
   role: 'user' | 'assistant';
   content: string;
   action?: AvniAction | null;
+  provider?: string;
 }
 
 const QUICK_PROMPTS = [
-  'Help me create a prompt',
-  'How do I use the Edit tab?',
+  'Help me write a cinematic prompt',
+  'What providers are configured?',
   'Suggest a fantasy scene',
   'Take me to the Studio',
+  'How do I edit an image?',
 ];
 
-async function callAvniChat(messages: { role: string; content: string }[], currentPrompt: string) {
-  const { data, error } = await supabase.functions.invoke('avni-ai-chat', {
-    body: { messages, currentPrompt },
-  });
-  if (error) {
-    let msg = error.message;
-    if (error instanceof FunctionsHttpError) {
-      try { const t = await error.context?.text(); msg = `[${error.context?.status}] ${t || msg}`; } catch {}
-    }
-    throw new Error(msg);
+const SYSTEM_PROMPT_TEMPLATE = (stateJson: string, currentPrompt: string) => `You are Avni, the intelligent AI assistant and agentic controller of Avni Image Studio.
+
+== YOUR ROLE ==
+You are fully agentic. You understand the app state, which providers are configured, what features are available, and you actively guide users to create stunning images.
+
+== CURRENT APP STATE ==
+${stateJson}
+
+== CURRENT PROMPT IN STUDIO ==
+${currentPrompt || '(empty)'}
+
+== APP SECTIONS ==
+- Hero: Top landing area
+- Features (id: features): 6 capability cards
+- AI Studio (id: generator): Main creation panel with Generate and Edit Image tabs
+  • Generate tab: Prompt → Inspire Me → Quick Tags → Style Presets → Aspect Ratio → Generate
+  • Edit Image tab: Upload image → Transformation prompt → Edit → Before/After comparison
+- Gallery (id: gallery): AI-generated images with lightbox and ZIP download
+- History sidebar: All past generations with search, sort, filter
+- Settings (gear icon): AI Integrations modal with 7 providers + Studio Control Mode
+
+== ACTIONS YOU CAN TRIGGER ==
+Return a JSON action alongside your message:
+{
+  "message": "Your response",
+  "action": null | {
+    "type": "fill_prompt" | "navigate" | "set_style" | "set_aspect_ratio" | "open_history" | "switch_tab" | "open_settings" | "trigger_generate",
+    "payload": <value>
   }
-  return data as { message: string; action: AvniAction | null };
 }
 
-export default function AvniAIChat({ currentPrompt, onAction }: AvniAIChatProps) {
+Action types:
+- fill_prompt: payload = rich prompt text
+- navigate: payload = "generator" | "gallery" | "features" | "top"
+- set_style: payload = "" | "photorealistic, 8K ultra HD, hyperrealistic" | "digital art, vibrant, concept art, artstation" | "watercolor painting, soft edges, artistic" | "cyberpunk, neon lights, futuristic, dark atmosphere" | "fantasy art, magical, epic, detailed illustration" | "minimalist, clean, simple, elegant, modern"
+- set_aspect_ratio: payload = "1:1" | "16:9" | "9:16" | "4:3"
+- open_history: payload = true
+- switch_tab: payload = "generate" | "edit"
+- open_settings: payload = true (opens AI Integrations modal)
+- trigger_generate: payload = true (triggers image generation with current prompt)
+
+== STUDIO CONTROL MODE BEHAVIOR ==
+- fully_agentic: Auto-select and trigger actions without asking for confirmation
+- half_manual: Suggest actions but ask user to confirm before triggering
+- fully_manual: Give guidance only — never trigger actions automatically
+
+== PROVIDER GUIDANCE ==
+If a provider shows "not_configured" or no API key, tell the user to:
+1. Click the gear icon ⚙ in the top-right
+2. Go to AI Integrations tab
+3. Enter their API key for that provider
+4. Click Test Connection
+5. Save Settings
+
+== GUIDELINES ==
+- Be concise, helpful, and creative
+- If user asks for a prompt, craft vivid detailed prompts and use fill_prompt
+- If user asks why generation fails, explain provider configuration
+- If no providers configured and no OnSpace fallback, suggest opening settings
+- ALWAYS return valid JSON with both "message" and "action" keys
+- The "action" field must be null if no action is needed`;
+
+async function callAvniChatViaProvider(
+  messages: { role: string; content: string }[],
+  currentPrompt: string
+): Promise<{ message: string; action: AvniAction | null; provider?: string }> {
+  const state = getAIIntegrationState();
+
+  // Build context-aware system prompt
+  const stateContext = JSON.stringify({
+    studioControlMode: state.studioControlMode,
+    onspaceAsFallback: state.onspaceAsFallback,
+    activeBotProvider: state.activeBotProvider,
+    providers: Object.fromEntries(
+      Object.entries(state.providers)
+        .filter(([k]) => k !== 'onspace')
+        .map(([k, v]) => [k, {
+          enabled: v.settings.enabled,
+          status: v.settings.status,
+          hasKey: Boolean(v.auth?.apiKey),
+        }])
+    ),
+    generationFallback: state.globalDefaults.generationFallback,
+    editingFallback: state.globalDefaults.editingFallback,
+  }, null, 2);
+
+  const systemPrompt = SYSTEM_PROMPT_TEMPLATE(stateContext, currentPrompt);
+
+  // 1. Try external provider
+  if (hasConfiguredExternalProvider('chat')) {
+    console.log('[AvniAI] Routing chat to external provider');
+    try {
+      const result = await chatViaProvider(messages, systemPrompt);
+      if (result) {
+        console.log(`[AvniAI] Chat response via: ${result.provider}`);
+        // Try to parse as JSON action response
+        try {
+          const parsed = JSON.parse(result.text);
+          if (parsed.message) return { ...parsed, provider: result.provider };
+        } catch {
+          // Plain text response — wrap it
+          return { message: result.text, action: null, provider: result.provider };
+        }
+      }
+    } catch (err) {
+      console.warn('[AvniAI] External chat failed:', err instanceof Error ? err.message : err);
+    }
+  }
+
+  // 2. OnSpace fallback
+  if (state.onspaceAsFallback) {
+    console.log('[AvniAI] Falling back to OnSpace AI for chat');
+    const { data, error } = await supabase.functions.invoke('avni-ai-chat', {
+      body: { messages, currentPrompt },
+    });
+    if (error) {
+      let msg = error.message;
+      if (error instanceof FunctionsHttpError) {
+        try { const t = await error.context?.text(); msg = `[${error.context?.status}] ${t || msg}`; } catch {}
+      }
+      throw new Error(msg);
+    }
+    return { ...(data as { message: string; action: AvniAction | null }), provider: 'onspace' };
+  }
+
+  // 3. No provider configured
+  return {
+    message: "I need an AI provider to function. Please open **Settings** (⚙ gear icon) → AI Integrations and add a Gemini or OpenRouter API key, then save. Once connected, I can fully assist you!",
+    action: { type: 'open_settings', payload: true },
+    provider: 'none',
+  };
+}
+
+export default function AvniAIChat({ currentPrompt, onAction, onTriggerGenerate }: AvniAIChatProps) {
   const [open, setOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([
     {
       role: 'assistant',
-      content: "Hi! I'm **Avni**, your AI studio assistant. I can help you craft prompts, navigate the app, set styles, and more. What would you like to create today?",
+      content: "Hi! I'm **Avni**, your agentic AI studio assistant. I can craft prompts, navigate the app, configure providers, and even trigger image generation. What would you like to create?",
       action: null,
     },
   ]);
@@ -54,6 +182,16 @@ export default function AvniAIChat({ currentPrompt, onAction }: AvniAIChatProps)
   const [loading, setLoading] = useState(false);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
+  const { state } = useAIIntegrationStore();
+
+  // Determine provider status for indicator
+  const chatProvider = hasConfiguredExternalProvider('chat')
+    ? state.globalDefaults.chatDefault
+    : (state.onspaceAsFallback ? 'onspace' : null);
+  const providerLabel = chatProvider
+    ? (state.providers[chatProvider]?.label ?? chatProvider)
+    : 'No provider';
+  const isReady = chatProvider !== null;
 
   useEffect(() => {
     if (open) setTimeout(() => inputRef.current?.focus(), 100);
@@ -62,6 +200,25 @@ export default function AvniAIChat({ currentPrompt, onAction }: AvniAIChatProps)
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
   }, [messages]);
+
+  const handleAction = useCallback((action: AvniAction) => {
+    switch (action.type) {
+      case 'open_settings':
+        onAction({ type: 'open_settings' as AvniAction['type'], payload: true });
+        break;
+      case 'trigger_generate':
+        if (state.studioControlMode === 'fully_agentic') {
+          onTriggerGenerate?.();
+        } else if (state.studioControlMode === 'half_manual') {
+          toast.info('Avni wants to generate — click Generate to confirm.');
+          onAction({ type: 'navigate', payload: 'generator' });
+        }
+        // fully_manual: no auto action
+        break;
+      default:
+        onAction(action);
+    }
+  }, [state.studioControlMode, onAction, onTriggerGenerate]);
 
   const sendMessage = useCallback(async (text: string) => {
     const trimmed = text.trim();
@@ -72,37 +229,62 @@ export default function AvniAIChat({ currentPrompt, onAction }: AvniAIChatProps)
     setLoading(true);
     try {
       const history = [...messages, userMsg].map(m => ({ role: m.role, content: m.content }));
-      const result = await callAvniChat(history, currentPrompt);
+      const result = await callAvniChatViaProvider(history, currentPrompt);
       const assistantMsg: ChatMessage = {
         role: 'assistant',
         content: result.message || 'Done!',
-        action: result.action || null,
+        action: (result.action as AvniAction) || null,
+        provider: result.provider,
       };
       setMessages(prev => [...prev, assistantMsg]);
       if (result.action) {
-        onAction(result.action);
-        if (result.action.type === 'fill_prompt') {
-          toast.success('Prompt filled in Studio!');
-        } else if (result.action.type === 'navigate') {
-          toast.success(`Navigating to ${result.action.payload}...`);
+        const action = result.action as AvniAction;
+        // Respect control mode
+        if (state.studioControlMode === 'fully_manual' && action.type !== 'open_settings') {
+          // In fully manual mode: suggest but don't auto-trigger
+          toast.info(`Avni suggests: ${action.type.replace(/_/g, ' ')} — apply manually from the controls.`);
+        } else {
+          handleAction(action);
+          const successMsgs: Partial<Record<AvniAction['type'], string>> = {
+            fill_prompt: 'Prompt filled in Studio!',
+            navigate: `Navigating to ${action.payload}…`,
+            open_settings: 'Opening AI Integrations settings…',
+            trigger_generate: 'Triggering image generation…',
+          };
+          if (successMsgs[action.type]) toast.success(successMsgs[action.type]);
         }
       }
     } catch (err) {
-      setMessages(prev => [...prev, { role: 'assistant', content: 'Sorry, something went wrong. Please try again.', action: null }]);
+      setMessages(prev => [...prev, {
+        role: 'assistant',
+        content: `Something went wrong: ${err instanceof Error ? err.message : 'Unknown error'}. Try opening Settings to check your provider configuration.`,
+        action: { type: 'open_settings', payload: true },
+      }]);
     } finally {
       setLoading(false);
     }
-  }, [messages, loading, currentPrompt, onAction]);
+  }, [messages, loading, currentPrompt, state.studioControlMode, handleAction]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(input); }
   };
 
-  // Simple markdown bold renderer
   const renderContent = (text: string) => {
     return text.split(/\*\*(.*?)\*\*/g).map((part, i) =>
       i % 2 === 1 ? <strong key={i} className="font-semibold text-primary/90">{part}</strong> : part
     );
+  };
+
+  const controlModeColors: Record<string, string> = {
+    fully_agentic: 'text-emerald-400',
+    half_manual: 'text-amber-400',
+    fully_manual: 'text-sky-400',
+  };
+
+  const controlModeLabels: Record<string, string> = {
+    fully_agentic: 'Fully Agentic',
+    half_manual: 'Half Manual',
+    fully_manual: 'Fully Manual',
   };
 
   return (
@@ -110,11 +292,11 @@ export default function AvniAIChat({ currentPrompt, onAction }: AvniAIChatProps)
       {/* Floating button */}
       <button
         onClick={() => setOpen(o => !o)}
-        className={`fixed bottom-6 right-6 z-50 w-13 h-13 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 ${open ? 'studio-gradient rotate-180 scale-95' : 'studio-gradient hover:scale-105 hover:shadow-[0_0_30px_rgba(147,80,230,0.6)]'}`}
+        className={`fixed bottom-6 right-6 z-50 rounded-2xl shadow-2xl flex items-center justify-center transition-all duration-300 studio-gradient ${open ? 'rotate-180 scale-95' : 'hover:scale-105 hover:shadow-[0_0_30px_rgba(147,80,230,0.6)]'}`}
         style={{ width: 52, height: 52 }}
-        aria-label="Open Avni AI Chat"
+        aria-label="Open Avni AI"
       >
-        {open ? <ChevronDown className="w-5 h-5 text-white" /> : <Bot className="w-5 h-5 text-white" />}
+        {open ? <ChevronDown className="w-5 h-5 text-white" /> : <Brain className="w-5 h-5 text-white" />}
       </button>
 
       {/* Unread dot */}
@@ -124,28 +306,54 @@ export default function AvniAIChat({ currentPrompt, onAction }: AvniAIChatProps)
 
       {/* Chat panel */}
       <div
-        className={`fixed bottom-[70px] right-4 z-50 w-[340px] sm:w-[380px] flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-border/40 transition-all duration-300 origin-bottom-right
+        className={`fixed bottom-[70px] right-4 z-50 w-[340px] sm:w-[390px] flex flex-col rounded-2xl overflow-hidden shadow-2xl border border-border/40 transition-all duration-300 origin-bottom-right
           ${open ? 'scale-100 opacity-100 pointer-events-auto' : 'scale-90 opacity-0 pointer-events-none'}`}
-        style={{ maxHeight: '520px', background: 'hsl(240, 12%, 7%)', backdropFilter: 'blur(16px)' }}
+        style={{ maxHeight: '560px', background: 'hsl(240, 12%, 7%)', backdropFilter: 'blur(16px)' }}
       >
         {/* Header */}
         <div className="flex items-center justify-between px-4 py-3 border-b border-border/40 flex-shrink-0 studio-gradient">
           <div className="flex items-center gap-2.5">
             <div className="w-7 h-7 rounded-xl bg-white/20 flex items-center justify-center">
-              <Sparkles className="w-3.5 h-3.5 text-white" />
+              <Brain className="w-3.5 h-3.5 text-white" />
             </div>
             <div>
-              <p className="text-xs font-bold text-white">Avni AI</p>
-              <p className="text-[10px] text-white/70">Agentic Studio Assistant</p>
+              <p className="text-xs font-bold text-white">Avni AI Agent</p>
+              <div className="flex items-center gap-1.5">
+                <span className={`text-[10px] ${controlModeColors[state.studioControlMode]}`}>
+                  {controlModeLabels[state.studioControlMode]}
+                </span>
+                <span className="text-white/30 text-[10px]">·</span>
+                <span className="text-[10px] text-white/60">{providerLabel}</span>
+                {isReady ? <CheckCircle2 className="w-2.5 h-2.5 text-emerald-400" /> : <AlertTriangle className="w-2.5 h-2.5 text-amber-400" />}
+              </div>
             </div>
           </div>
-          <button
-            onClick={() => setOpen(false)}
-            className="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
-          >
-            <X className="w-3 h-3 text-white" />
-          </button>
+          <div className="flex items-center gap-1.5">
+            <button
+              onClick={() => onAction({ type: 'open_settings' as AvniAction['type'], payload: true })}
+              className="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+              title="AI Integrations Settings"
+            >
+              <Settings className="w-3 h-3 text-white/70" />
+            </button>
+            <button
+              onClick={() => setOpen(false)}
+              className="w-6 h-6 rounded-lg bg-white/15 hover:bg-white/25 flex items-center justify-center transition-colors"
+            >
+              <X className="w-3 h-3 text-white" />
+            </button>
+          </div>
         </div>
+
+        {/* Provider status banner (if not ready) */}
+        {!isReady && (
+          <div className="flex items-start gap-2 px-3 py-2 bg-amber-500/10 border-b border-amber-500/20 flex-shrink-0">
+            <AlertTriangle className="w-3.5 h-3.5 text-amber-400 mt-0.5 shrink-0" />
+            <p className="text-[10px] text-amber-300/90 leading-relaxed">
+              No AI provider configured. <button onClick={() => onAction({ type: 'open_settings' as AvniAction['type'], payload: true })} className="underline hover:text-amber-200">Open Settings</button> to add your Gemini or OpenRouter API key.
+            </p>
+          </div>
+        )}
 
         {/* Messages */}
         <div className="flex-1 overflow-y-auto px-3 py-3 space-y-3 min-h-0">
@@ -158,16 +366,19 @@ export default function AvniAIChat({ currentPrompt, onAction }: AvniAIChatProps)
                   : <Bot className="w-3 h-3 text-white" />
                 }
               </div>
-              <div className={`max-w-[78%] rounded-2xl px-3 py-2 text-xs leading-relaxed
+              <div className={`max-w-[80%] rounded-2xl px-3 py-2 text-xs leading-relaxed
                 ${msg.role === 'user'
                   ? 'bg-primary/20 text-foreground rounded-tr-sm'
                   : 'bg-secondary/70 text-foreground/90 rounded-tl-sm border border-border/30'}`}>
                 {renderContent(msg.content)}
                 {msg.action && (
                   <div className="mt-1.5 flex items-center gap-1 text-[10px] text-primary/70">
-                    <Wand2 className="w-2.5 h-2.5" />
+                    <Zap className="w-2.5 h-2.5" />
                     <span>Action: {msg.action.type.replace(/_/g, ' ')}</span>
                   </div>
+                )}
+                {msg.provider && msg.provider !== 'none' && (
+                  <div className="mt-1 text-[9px] text-muted-foreground/40">via {msg.provider}</div>
                 )}
               </div>
             </div>
@@ -186,7 +397,7 @@ export default function AvniAIChat({ currentPrompt, onAction }: AvniAIChatProps)
           <div ref={bottomRef} />
         </div>
 
-        {/* Quick prompts (only show at start) */}
+        {/* Quick prompts */}
         {messages.length <= 1 && (
           <div className="px-3 pb-2 flex flex-wrap gap-1.5 flex-shrink-0">
             {QUICK_PROMPTS.map((q) => (
