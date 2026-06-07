@@ -2,8 +2,9 @@ import { useState, useEffect, useRef, useCallback } from 'react';
 import {
   Sparkles, ImageIcon, Wand2, Layers, Zap, Globe,
   ChevronDown, Download, RefreshCw, ArrowRight, Star,
-  History, Share2, Upload, X, Lightbulb, Plus, Package,
+  History, Share2, Upload, X, Lightbulb, Plus, Package, Settings2,
 } from 'lucide-react';
+import AIIntegrationsModal from '@/features/ai-integrations/components/AIIntegrationsModal';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
 import { generateImage, getInspirePrompts, convertImageToBase64, downloadAllImagesAsZip } from '@/lib/api';
@@ -351,6 +352,7 @@ export default function HomePage() {
 
   // Sidebar
   const [historyOpen, setHistoryOpen] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
 
   const { history, addItem, removeItem, clearAll } = useCreationHistory();
 
@@ -514,6 +516,9 @@ export default function HomePage() {
       {/* History sidebar */}
       <HistorySidebar open={historyOpen} onClose={() => setHistoryOpen(false)} history={history} onRemove={removeItem} onClearAll={clearAll} />
 
+      {/* AI Integrations settings */}
+      <AIIntegrationsModal open={settingsOpen} onClose={() => setSettingsOpen(false)} />
+
       {/* Avni AI Chat */}
       <AvniAIChat currentPrompt={prompt} onAction={handleAvniAction} />
 
@@ -532,6 +537,14 @@ export default function HomePage() {
             <button onClick={() => scrollTo('gallery')} className="hover:text-foreground transition-colors">Gallery</button>
           </div>
           <div className="flex items-center gap-2">
+            <button
+              onClick={() => setSettingsOpen(true)}
+              className="w-8 h-8 rounded-lg bg-secondary/60 hover:bg-secondary border border-border/40 hover:border-primary/40 flex items-center justify-center transition-all"
+              aria-label="AI Integrations"
+              title="AI Integrations"
+            >
+              <Settings2 className="w-3.5 h-3.5 text-muted-foreground" />
+            </button>
             <button
               onClick={() => setHistoryOpen(true)}
               className="relative w-8 h-8 rounded-lg bg-secondary/60 hover:bg-secondary border border-border/40 hover:border-primary/40 flex items-center justify-center transition-all"
