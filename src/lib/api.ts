@@ -1,5 +1,5 @@
-import { createClient } from '@supabase/supabase-js';
 import { FunctionsHttpError } from '@supabase/supabase-js';
+import { supabase } from '@/lib/supabaseClient';
 import {
   generateImageViaProvider,
   editImageViaProvider,
@@ -8,10 +8,8 @@ import {
 } from '@/lib/providerApi';
 import { getAIIntegrationState } from '@/features/ai-integrations/store/aiIntegrationStore';
 
-const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
-const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
-
-export const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Re-export supabase for backward-compat
+export { supabase } from '@/lib/supabaseClient';
 
 // ─── Edge function invoker (OnSpace backend) ──────────────────────────
 async function invokeFunction(name: string, body: object) {

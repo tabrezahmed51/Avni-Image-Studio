@@ -8,6 +8,16 @@
     <meta name="description" content="Transform your imagination into stunning AI-generated visuals. Avni Image Studio — text to image, multi-style generation, instant download.">
     <meta name="keywords" content="ai image generator, text to image, avni image studio, ai art, image generation, creative ai">
 
+    <!-- Security: prevent clickjacking -->
+    <meta http-equiv="X-Frame-Options" content="SAMEORIGIN" />
+    <meta http-equiv="X-Content-Type-Options" content="nosniff" />
+    <meta http-equiv="Referrer-Policy" content="strict-origin-when-cross-origin" />
+
+    <!-- Block crawlers from indexing private sections -->
+    <meta name="robots" content="index, follow, noarchive" />
+    <meta name="googlebot" content="index, follow, noarchive" />
+
+    <!-- OG / Social -->
     <meta property="og:type" content="website">
     <meta property="og:title" content="Avni Image Studio — Imagination is next reality">
     <meta property="og:description" content="Transform your words into breathtaking visuals with advanced multi-modal AI.">
@@ -21,6 +31,7 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.ico" />
   </head>
   <body>
+    <!-- Honeypot for bots -->
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

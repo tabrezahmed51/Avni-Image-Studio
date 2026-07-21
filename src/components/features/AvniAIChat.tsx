@@ -3,7 +3,7 @@ import {
   X, Send, Sparkles, Bot, User, Loader2, ChevronDown, Wand2,
   Zap, Settings, Info, AlertTriangle, CheckCircle2, Brain,
 } from 'lucide-react';
-import { supabase } from '@/lib/api';
+import { supabase } from '@/lib/supabaseClient';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { chatViaProvider, hasConfiguredExternalProvider } from '@/lib/providerApi';
 import { getAIIntegrationState } from '@/features/ai-integrations/store/aiIntegrationStore';
