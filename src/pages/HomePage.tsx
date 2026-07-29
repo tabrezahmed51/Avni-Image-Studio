@@ -1,9 +1,13 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
   Sparkles, ImageIcon, Wand2, Layers, Zap, Globe,
   ChevronDown, Download, RefreshCw, ArrowRight, Star,
   History, Share2, Upload, X, Lightbulb, Plus, Package, Settings2,
+  LogOut, ShieldCheck, User,
 } from 'lucide-react';
+import { useAuth } from '@/contexts/AuthContext';
+import { supabase } from '@/lib/supabaseClient';
 import AIIntegrationsModal from '@/features/ai-integrations/components/AIIntegrationsModal';
 import { Button } from '@/components/ui/button';
 import { toast } from 'sonner';
@@ -320,6 +324,48 @@ function VariationCard({ item, prompt }: { item: VariationItem; prompt: string }
   );
 }
 
+// ─── User Avatar Menu ─────────────────────────────────────────────────
+function UserMenu() {
+  const { user, logout } = useAuth();
+  const navigate = useNavigate();
+  const [open, setOpen] = useState(false);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    logout();
+  };
+
+  if (!user) return null;
+
+  return (
+    <div className="relative">
+      <button
+        onClick={() => setOpen(o => !o)}
+        className="flex items-center gap-1.5 pl-1 pr-2.5 py-1 rounded-xl bg-secondary/60 hover:bg-secondary border border-border/40 hover:border-primary/40 transition-all"
+      >
+        {user.avatar
+          ? <img src={user.avatar} alt="" className="w-6 h-6 rounded-lg object-cover" />
+          : <div className="w-6 h-6 rounded-lg studio-gradient flex items-center justify-center text-[11px] text-white font-bold">{user.username?.[0]?.toUpperCase()}</div>
+        }
+        <span className="text-xs text-foreground max-w-[80px] truncate hidden sm:block">{user.username}</span>
+      </button>
+      {open && (
+        <div className="absolute top-full right-0 mt-1.5 z-50 w-44 glass-card rounded-xl border border-border/40 shadow-xl overflow-hidden" onClick={() => setOpen(false)}>
+          <div className="px-3 py-2.5 border-b border-border/30">
+            <p className="text-xs font-medium text-foreground truncate">{user.email}</p>
+          </div>
+          <button onClick={() => navigate('/admin')} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-muted-foreground hover:text-foreground hover:bg-secondary/60 transition-colors">
+            <ShieldCheck className="w-3.5 h-3.5 text-primary" />Admin Panel
+          </button>
+          <button onClick={handleLogout} className="w-full flex items-center gap-2 px-3 py-2 text-xs text-red-400 hover:text-red-300 hover:bg-red-500/10 transition-colors">
+            <LogOut className="w-3.5 h-3.5" />Sign Out
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ─── Main Page ────────────────────────────────────────────────────────
 export default function HomePage() {
   const [activeTab, setActiveTab] = useState<'generate' | 'edit'>('generate');
@@ -564,8 +610,9 @@ export default function HomePage() {
                 </span>
               )}
             </button>
-            <Button onClick={() => scrollTo('generator')} size="sm" className="studio-gradient text-white border-0 hover:opacity-90 text-xs px-3 py-1.5 h-auto">
-              Try Free
+            <UserMenu />
+            <Button onClick={() => scrollTo('generator')} size="sm" className="studio-gradient text-white border-0 hover:opacity-90 text-xs px-3 py-1.5 h-auto hidden sm:inline-flex">
+              Studio
             </Button>
           </div>
         </div>

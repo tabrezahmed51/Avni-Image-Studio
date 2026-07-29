@@ -77,8 +77,12 @@
     background-clip: text;
   }
 
-  .text-gold {
+  .text-studio-gold {
     color: hsl(var(--gold));
+  }
+
+  .studio-rose {
+    color: hsl(var(--rose));
   }
 
   .glow-violet {
