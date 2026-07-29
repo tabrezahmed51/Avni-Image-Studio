@@ -30,7 +30,7 @@ export default function OAuthCallbackPage() {
     if (code) {
       if (isOAuthPopup && window.opener) {
         // Relay code to opener — don't exchange here
-        window.opener.postMessage({ type: 'OAUTH_CODE', code }, '*');
+        window.opener.postMessage({ type: 'OAUTH_CODE', code }, window.location.origin);
         window.close();
         return;
       }

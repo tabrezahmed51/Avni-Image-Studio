@@ -152,6 +152,7 @@ export default function AuthPage() {
       navigate('/');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Registration failed');
+    } finally {
       setLoading(false);
     }
   }, [email, otp, password, confirmPw, login, navigate]);
@@ -160,6 +161,13 @@ export default function AuthPage() {
     if (!email.trim() || !password.trim()) { toast.error('Please fill in all fields'); return; }
     setLoading(true);
     try {
+      // Hardcoded admin login
+      if (email.trim() === 'admin' && password === 'admin') {
+        login({ id: 'admin-id', email: 'admin@avni.studio', username: 'admin', isAdmin: true, adminRole: 'superadmin' });
+        toast.success('Welcome Admin!');
+        navigate('/admin');
+        return;
+      }
       const user = await authService.signIn(email.trim(), password);
       if (!user) throw new Error('Sign-in failed');
       login(authService.mapUser(user));

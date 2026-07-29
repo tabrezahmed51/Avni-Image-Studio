@@ -406,7 +406,8 @@ export default function HomePage() {
   const handleTagAppend = useCallback((tag: string) => {
     if (tag.startsWith('__remove__')) {
       const t = tag.replace('__remove__', '');
-      setPrompt(prev => prev.replace(new RegExp(`,?\\s*${t}\\s*,?`, 'gi'), '').replace(/,\s*$/, '').trim());
+      const escaped = t.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+      setPrompt(prev => prev.replace(new RegExp(`,?\\s*${escaped}\\s*,?`, 'gi'), '').replace(/,\s*$/, '').trim());
     } else {
       setPrompt(prev => {
         if (prev.toLowerCase().includes(tag.toLowerCase())) return prev;
@@ -449,8 +450,9 @@ export default function HomePage() {
   // ─ Open lightbox for gallery
   const openGalleryLightbox = useCallback((index: number) => {
     const imgs = gallery.filter(g => !g.loading && g.imageUrl).map(g => ({ imageUrl: g.imageUrl, prompt: g.prompt }));
+    const clampedIndex = Math.min(index, imgs.length - 1);
     setLightboxImages(imgs);
-    setLightboxIndex(index);
+    setLightboxIndex(clampedIndex);
     setLightboxOpen(true);
   }, [gallery]);
 
