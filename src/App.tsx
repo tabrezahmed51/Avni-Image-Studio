@@ -7,6 +7,7 @@ import AuthPage from '@/pages/AuthPage';
 import OAuthCallbackPage from '@/pages/OAuthCallbackPage';
 import AdminPage from '@/pages/AdminPage';
 import NotFound from '@/pages/NotFound';
+import GalleryPage from '@/pages/GalleryPage';
 
 // Robots / crawler meta tag is in index.html
 // Additional security: block iframe embedding via CSP in index.html
@@ -29,6 +30,7 @@ export default function App() {
           {/* Public routes */}
           <Route path="/auth" element={<AuthPage />} />
           <Route path="/auth/callback" element={<OAuthCallbackPage />} />
+          <Route path="/gallery" element={<GalleryPage />} />
 
           {/* Protected routes */}
           <Route path="/" element={

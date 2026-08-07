@@ -12,6 +12,8 @@
 
 import { getAIIntegrationState } from '@/features/ai-integrations/store/aiIntegrationStore';
 import { providerClientFactory } from '@/features/ai-integrations/services/providerClientFactory';
+import { ollamaChat, ollamaGenerateWithImage } from '@/lib/ollamaClient';
+import { getComputeProviderState } from '@/stores/useComputeProviderStore';
 import type { AIProvider, AIFeature, AIIntegrationState, AIRouteResponse } from '@/features/ai-integrations/types/aiIntegration.types';
 
 const DEBUG = '[ProviderApi]';
@@ -80,6 +82,36 @@ function isNonRetryable(error: unknown): boolean {
     msg.includes('invalid key') || msg.includes('no image');
 }
 
+// ─── Try Ollama compute provider first (if mode = local/ollama_cloud) ──
+async function tryOllamaProvider(
+  feature: AIFeature,
+  prompt: string,
+  imageBase64?: string,
+): Promise<{ imageUrl?: string; text?: string } | null> {
+  const compute = getComputeProviderState();
+  if (compute.mode === 'cloud') return null; // Skip Ollama if cloud mode
+
+  const ollamaConfig = {
+    baseUrl: compute.mode === 'ollama_cloud' ? compute.localUrl : compute.localUrl,
+    apiKey: compute.mode === 'ollama_cloud' ? compute.cloudApiKey : undefined,
+    model: compute.mode === 'ollama_cloud' ? compute.cloudModel : compute.localModel,
+    isCloud: compute.mode === 'ollama_cloud',
+  };
+
+  try {
+    if (feature === 'text_to_image' || feature === 'image_edit') {
+      const text = await ollamaGenerateWithImage(ollamaConfig, prompt, imageBase64);
+      return { text };
+    } else if (feature === 'chat' || feature === 'inspire') {
+      const text = await ollamaChat(ollamaConfig, [{ role: 'user', content: prompt }]);
+      return { text };
+    }
+  } catch (err) {
+    debugLog('Ollama provider failed (gracefully):', err instanceof Error ? err.message : err);
+  }
+  return null;
+}
+
 // ─── Main external provider router ───────────────────────────────────
 export async function routeToExternalProvider(
   feature: AIFeature,
@@ -122,6 +154,15 @@ export async function generateImageViaProvider(
   aspectRatio = '1:1',
   style = '',
 ): Promise<{ imageUrl: string; provider: AIProvider } | null> {
+  // Try Ollama first if local/cloud mode is active
+  const ollamaResult = await tryOllamaProvider('text_to_image', prompt);
+  if (ollamaResult?.text) {
+    // Ollama llava returns text description, not a real image URL — use a placeholder
+    // In a real setup with a local diffusion model, this would return an image
+    debugLog('Ollama returned response for text_to_image (multimodal description)');
+    // Fall through to external providers for actual image generation
+  }
+
   const result = await routeToExternalProvider('text_to_image', async (provider, state) => {
     const config = state.providers[provider];
     const client = providerClientFactory(provider, config);
@@ -160,8 +201,15 @@ export async function chatViaProvider(
 ): Promise<{ text: string; provider: AIProvider } | null> {
   const state = getAIIntegrationState();
 
-  // Build full prompt from messages + system context
+  // Try Ollama first if in local/cloud mode
   const lastUserMsg = messages.filter(m => m.role === 'user').pop()?.content ?? '';
+  const fullPrompt = `${systemPrompt}\n\nUser: ${lastUserMsg}`;
+  const ollamaResult = await tryOllamaProvider('chat', fullPrompt);
+  if (ollamaResult?.text) {
+    return { text: ollamaResult.text, provider: 'comfyui' as AIProvider }; // using comfyui slot as "ollama"
+  }
+
+  // Build full prompt from messages + system context
   const contextPrompt = `${systemPrompt}\n\nConversation context:\n${messages.slice(-4).map(m => `${m.role}: ${m.content}`).join('\n')}\n\nUser: ${lastUserMsg}`;
 
   const result = await routeToExternalProvider('chat', async (provider, st) => {

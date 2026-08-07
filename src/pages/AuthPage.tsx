@@ -93,7 +93,7 @@ const FEATURES = [
   { icon: Globe, label: '7 AI Providers' },
 ];
 
-type AuthStep = 'landing' | 'signin' | 'signup_email' | 'signup_otp' | 'signup_password';
+type AuthStep = 'landing' | 'signin' | 'signup_email' | 'signup_otp' | 'signup_password' | 'forgot_email' | 'forgot_otp' | 'forgot_password';
 
 export default function AuthPage() {
   const [step, setStep] = useState<AuthStep>('landing');
@@ -103,6 +103,9 @@ export default function AuthPage() {
   const [confirmPw, setConfirmPw] = useState('');
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [forgotEmail, setForgotEmail] = useState('');
+  const [forgotOtp, setForgotOtp] = useState('');
+  const [forgotPassword, setForgotPassword] = useState('');
   const popupRef = useRef<Window | null>(null);
   const { login, user } = useAuth();
   const navigate = useNavigate();
@@ -152,7 +155,6 @@ export default function AuthPage() {
       navigate('/');
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : 'Registration failed');
-    } finally {
       setLoading(false);
     }
   }, [email, otp, password, confirmPw, login, navigate]);
@@ -161,13 +163,6 @@ export default function AuthPage() {
     if (!email.trim() || !password.trim()) { toast.error('Please fill in all fields'); return; }
     setLoading(true);
     try {
-      // Hardcoded admin login
-      if (email.trim() === 'admin' && password === 'admin') {
-        login({ id: 'admin-id', email: 'admin@avni.studio', username: 'admin', isAdmin: true, adminRole: 'superadmin' });
-        toast.success('Welcome Admin!');
-        navigate('/admin');
-        return;
-      }
       const user = await authService.signIn(email.trim(), password);
       if (!user) throw new Error('Sign-in failed');
       login(authService.mapUser(user));
@@ -178,6 +173,53 @@ export default function AuthPage() {
       setLoading(false);
     }
   }, [email, password, login, navigate]);
+
+  const handleForgotSendOtp = useCallback(async () => {
+    if (!forgotEmail.trim() || !forgotEmail.includes('@')) { toast.error('Enter a valid email'); return; }
+    setLoading(true);
+    try {
+      // Use signInWithOtp with shouldCreateUser: false for password reset
+      const { error } = await supabase.auth.signInWithOtp({
+        email: forgotEmail.trim(),
+        options: { shouldCreateUser: false },
+      });
+      if (error) throw error;
+      toast.success('Reset code sent — check your email');
+      setStep('forgot_otp');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Failed to send reset code');
+    } finally { setLoading(false); }
+  }, [forgotEmail]);
+
+  const handleForgotVerifyOtp = useCallback(async () => {
+    if (forgotOtp.length < 4) { toast.error('Enter the verification code'); return; }
+    setStep('forgot_password');
+  }, [forgotOtp]);
+
+  const handleForgotSetPassword = useCallback(async () => {
+    if (forgotPassword.length < 6) { toast.error('Password must be at least 6 characters'); return; }
+    setLoading(true);
+    try {
+      // Verify OTP first — this signs in the user
+      const { data, error } = await supabase.auth.verifyOtp({
+        email: forgotEmail.trim(),
+        token: forgotOtp,
+        type: 'email',
+      });
+      if (error) throw error;
+      // Now update the password
+      const { error: updateError } = await supabase.auth.updateUser({ password: forgotPassword });
+      if (updateError) throw updateError;
+      if (data.user) {
+        login(authService.mapUser(data.user));
+        toast.success('Password reset! Welcome back.');
+        navigate('/');
+      }
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'Password reset failed');
+      setLoading(false);
+    }
+  }, [forgotEmail, forgotOtp, forgotPassword, login, navigate]);
 
   const handleGoogleSignIn = useCallback(async () => {
     setLoading(true);
@@ -260,6 +302,89 @@ export default function AuthPage() {
             </div>
           )}
 
+          {/* ── FORGOT: Email ── */}
+          {step === 'forgot_email' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-bold text-foreground">Reset Password</h2>
+                <button onClick={() => setStep('signin')} className="text-xs text-muted-foreground hover:text-foreground">← Back</button>
+              </div>
+              <p className="text-xs text-muted-foreground">Enter your email to receive a reset code.</p>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Email</label>
+                <input
+                  type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
+                  placeholder="you@example.com"
+                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  onKeyDown={e => e.key === 'Enter' && handleForgotSendOtp()}
+                />
+              </div>
+              <Button onClick={handleForgotSendOtp} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+                {loading ? 'Sending…' : <><Mail className="w-4 h-4 mr-2" />Send Reset Code</>}
+              </Button>
+            </div>
+          )}
+
+          {/* ── FORGOT: OTP ── */}
+          {step === 'forgot_otp' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-bold text-foreground">Verify Code</h2>
+                <button onClick={() => setStep('forgot_email')} className="text-xs text-muted-foreground hover:text-foreground">← Back</button>
+              </div>
+              <p className="text-xs text-muted-foreground">Enter the code sent to <strong className="text-foreground">{forgotEmail}</strong></p>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">Reset Code</label>
+                <input
+                  type="text" inputMode="numeric" maxLength={6} value={forgotOtp} onChange={e => setForgotOtp(e.target.value.replace(/\D/g, ''))}
+                  placeholder="0000"
+                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  onKeyDown={e => e.key === 'Enter' && handleForgotVerifyOtp()}
+                />
+              </div>
+              <Button onClick={handleForgotVerifyOtp} disabled={forgotOtp.length < 4} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+                Verify Code <ArrowRight className="w-4 h-4 ml-1.5" />
+              </Button>
+              <button onClick={handleForgotSendOtp} className="w-full text-xs text-muted-foreground hover:text-foreground text-center">Resend code</button>
+            </div>
+          )}
+
+          {/* ── FORGOT: New Password ── */}
+          {step === 'forgot_password' && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between mb-2">
+                <h2 className="text-lg font-bold text-foreground">New Password</h2>
+                <button onClick={() => setStep('forgot_otp')} className="text-xs text-muted-foreground hover:text-foreground">← Back</button>
+              </div>
+              <div>
+                <label className="text-xs text-muted-foreground mb-1 block">New Password</label>
+                <div className="relative">
+                  <input
+                    type={showPw ? 'text' : 'password'} value={forgotPassword} onChange={e => setForgotPassword(e.target.value)}
+                    placeholder="Min. 6 characters"
+                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    onKeyDown={e => e.key === 'Enter' && handleForgotSetPassword()}
+                  />
+                  <button onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                  </button>
+                </div>
+              </div>
+              {forgotPassword.length > 0 && (
+                <div className="flex gap-1">
+                  {[1,2,3,4].map(n => (
+                    <div key={n} className={`flex-1 h-1 rounded-full transition-colors ${
+                      forgotPassword.length >= n * 3 ? (n <= 2 ? 'bg-amber-500' : n === 3 ? 'bg-blue-500' : 'bg-emerald-500') : 'bg-secondary'
+                    }`} />
+                  ))}
+                </div>
+              )}
+              <Button onClick={handleForgotSetPassword} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+                {loading ? 'Resetting…' : <><Shield className="w-4 h-4 mr-2" />Reset Password</>}
+              </Button>
+            </div>
+          )}
+
           {/* ── SIGN IN ── */}
           {step === 'signin' && (
             <div className="space-y-4">
@@ -302,6 +427,8 @@ export default function AuthPage() {
               <p className="text-center text-xs text-muted-foreground">
                 No account?{' '}
                 <button onClick={() => setStep('signup_email')} className="text-primary hover:underline">Create one</button>
+                {' '}·{' '}
+                <button onClick={() => { setForgotEmail(email); setStep('forgot_email'); }} className="text-muted-foreground hover:text-foreground">Forgot password?</button>
               </p>
             </div>
           )}
