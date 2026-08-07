@@ -275,3 +275,24 @@ export function getActiveProviderLabel(feature: AIFeature): string {
   const first = chain[0];
   return state.providers[first]?.label ?? first;
 }
+
+export async function generateGeminiImage(prompt: string) {
+  const apiKey = import.meta.env.VITE_GEMINI_API_KEY;
+
+  const response = await fetch(
+    `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-image:generateContent?key=${apiKey}`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ parts: [{ text: prompt }] }],
+        generationConfig: { responseModalities: ['IMAGE'] }
+      })
+    }
+  );
+
+  const data = await response.json();
+  // Extract the base64 image data string
+  const base64Image = data.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+  return `data:image/png;base64,${base64Image}`;
+}
