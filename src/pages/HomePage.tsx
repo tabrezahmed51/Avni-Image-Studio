@@ -360,9 +360,7 @@ export default function HomePage() {
   // Zustand image store for undo/redo tracking
   const { setActiveImage } = useImageStore();
 
-  const [showStartup, setShowStartup] = useState(() => {
-    return sessionStorage.getItem('hasSeenStartupVideo') !== 'true';
-  });
+  const [showStartup, setShowStartup] = useState(true);
 
   const [activeTab, setActiveTab] = useState<'generate' | 'edit'>('generate');
   const [prompt, setPrompt] = useState('');
