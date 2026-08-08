@@ -13,7 +13,16 @@ export default function StartupOverlay({ onClose }: StartupOverlayProps) {
   const [isLoaded, setIsLoaded] = useState(false);
   const [isMuted, setIsMuted] = useState(true);
   const [videoStarted, setVideoStarted] = useState(false);
+  const [zoomedOut, setZoomedOut] = useState(false);
   const videoRef = useRef<HTMLVideoElement>(null);
+
+  useEffect(() => {
+    // Start zoom-out transition shortly after mounting
+    const timer = setTimeout(() => {
+      setZoomedOut(true);
+    }, 100);
+    return () => clearTimeout(timer);
+  }, []);
 
   // 1. Progress bar simulation
   useEffect(() => {
@@ -98,7 +107,11 @@ export default function StartupOverlay({ onClose }: StartupOverlayProps) {
         muted={isMuted}
         playsInline
         className="absolute inset-0 w-full h-full object-cover transition-all"
-        style={{ transitionDuration: '2s' }}
+        style={{
+          transform: zoomedOut ? 'scale(1.00)' : 'scale(1.08)',
+          transitionDuration: '5s',
+          transitionTimingFunction: 'ease-out'
+        }}
       />
 
       {/* Top Header - Controls overlaying the video */}
