@@ -288,11 +288,11 @@ function ComputeToggle() {
       const ok = await checkLocalConnection();
       if (!ok) toast.warning(`Ollama not reachable at ${localUrl}. Run: OLLAMA_ORIGINS=* ollama serve`, { duration: 7000 });
       else toast.success('Switched to local Ollama!');
-    } else { setMode('cloud'); toast.success('Switched to OnSpace Cloud.'); }
+    } else { setMode('cloud'); toast.success('Switched to Supabase Cloud.'); }
   };
   const isLocal = mode !== 'cloud';
   return (
-    <button onClick={handleToggle} disabled={isChecking} title={isLocal ? `Ollama: ${localUrl}` : 'OnSpace Cloud'}
+    <button onClick={handleToggle} disabled={isChecking} title={isLocal ? `Ollama: ${localUrl}` : 'Supabase Cloud'}
       className={`hidden sm:flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[10px] font-medium transition-all ${isLocal ? (isLocalReachable === false ? 'border-red-500/40 bg-red-500/10 text-red-400' : 'border-emerald-500/40 bg-emerald-500/10 text-emerald-400') : 'border-border/40 bg-secondary/60 text-muted-foreground hover:text-foreground'}`}>
       {isChecking ? <RefreshCw className="w-3 h-3 animate-spin" /> : isLocal ? <Server className="w-3 h-3" /> : <Cpu className="w-3 h-3" />}
       {isLocal ? 'Local' : 'Cloud'}
@@ -555,7 +555,7 @@ export default function HomePage() {
         <div className="absolute top-16 left-1/4 w-60 h-60 rounded-full bg-primary/15 blur-3xl pointer-events-none" />
         <div className="absolute top-32 right-1/4 w-48 h-48 rounded-full bg-studio-rose/12 blur-3xl pointer-events-none" />
         <div className="relative max-w-4xl mx-auto">
-          <div className="inline-flex items-center gap-1.5 glass-card rounded-full px-3 py-1.5 mb-6 text-xs text-studio-gold"><Star className="w-3 h-3 fill-studio-gold" />Powered by OnSpace AI</div>
+          <div className="inline-flex items-center gap-1.5 glass-card rounded-full px-3 py-1.5 mb-6 text-xs text-studio-gold"><Star className="w-3 h-3 fill-studio-gold" />Powered by Gemini & Supabase</div>
           <h1 className="font-display text-4xl sm:text-5xl md:text-6xl lg:text-7xl font-black leading-[1.05] mb-4"><span className="text-studio">Avni</span><br /><span className="text-foreground">Image Studio</span></h1>
           <p className="text-base sm:text-lg md:text-xl text-studio-gold font-display italic mb-3">"Imagination is next reality"</p>
           <p className="text-muted-foreground text-sm sm:text-base max-w-xl mx-auto mb-8 leading-relaxed">Transform your words into breathtaking visuals. Multi-modal AI at your fingertips — generate, edit, and create stunning images in seconds.</p>
@@ -735,7 +735,7 @@ export default function HomePage() {
             <span className="font-display font-bold text-foreground">Avni Image Studio</span>
             <span className="italic text-studio-gold">— Imagination is next reality</span>
           </div>
-          <p>Powered by OnSpace AI · Nano Banana</p>
+          <p>Powered by Gemini & Supabase</p>
         </div>
       </footer>
     </div>

@@ -16,10 +16,10 @@ Deno.serve(async (req) => {
       currentPrompt?: string;
     };
 
-    const apiKey = Deno.env.get('ONSPACE_AI_API_KEY');
-    const baseUrl = Deno.env.get('ONSPACE_AI_BASE_URL');
+    const apiKey = Deno.env.get('AVNI_AI_API_KEY');
+    const baseUrl = Deno.env.get('AVNI_AI_BASE_URL');
 
-    if (!apiKey || !baseUrl) throw new Error('OnSpace AI configuration missing');
+    if (!apiKey || !baseUrl) throw new Error('Avni AI configuration missing');
 
     const systemPrompt = `You are Avni, the intelligent AI assistant built into Avni Image Studio — a powerful multi-modal AI image generation web app.
 
@@ -79,7 +79,7 @@ Action types:
 
     if (!response.ok) {
       const err = await response.text();
-      throw new Error(`OnSpace AI: ${err}`);
+      throw new Error(`Avni AI: ${err}`);
     }
 
     const data = await response.json();

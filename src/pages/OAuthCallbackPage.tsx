@@ -15,7 +15,7 @@ export default function OAuthCallbackPage() {
     const url = new URL(window.location.href);
     const code = url.searchParams.get('code');
     const errorParam = url.searchParams.get('error');
-    const isOAuthPopup = window.name === 'onspace-oauth';
+    const isOAuthPopup = window.name === 'avni-oauth';
 
     if (errorParam) {
       if (isOAuthPopup && window.opener) {

@@ -412,7 +412,7 @@ function UsersPanel({ isSuperAdmin }: { isSuperAdmin: boolean }) {
       <div className="glass-card rounded-xl p-4 border border-border/40">
         <p className="text-xs text-muted-foreground">
           Full user management (view all users, delete accounts) is available via{' '}
-          <span className="text-foreground font-medium">OnSpace Cloud Dashboard → Data tab</span>.
+          <span className="text-foreground font-medium">Supabase Dashboard → Table Editor</span>.
         </p>
       </div>
     </div>

@@ -499,16 +499,6 @@ export default function AdminAIProvidersModal({ open, onClose }: AdminAIProvider
                   ))}
                 </div>
               </div>
-
-              <div className="bg-secondary/30 rounded-xl p-4 border border-border/40">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="text-sm font-semibold text-foreground">Use OnSpace AI as Fallback</h3>
-                    <p className="text-xs text-muted-foreground mt-0.5">When all external providers fail, fall back to OnSpace built-in AI (uses credits).</p>
-                  </div>
-                  <Toggle checked={state.onspaceAsFallback} onChange={v => dispatch({ type: 'SET_ONSPACE_FALLBACK', enabled: v })} />
-                </div>
-              </div>
             </div>
           )}
 

@@ -6,7 +6,7 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { chatViaProvider, hasConfiguredExternalProvider } from '@/lib/providerApi';
-import { callAvniChatOnSpace } from '@/lib/api';
+
 import { getAIIntegrationState } from '@/features/ai-integrations/store/aiIntegrationStore';
 import { useAIIntegrationStore } from '@/features/ai-integrations/store/aiIntegrationStore';
 import { toast } from 'sonner';
@@ -95,7 +95,7 @@ If a provider shows "not_configured" or no API key, tell the user to:
 - Be concise, helpful, and creative
 - If user asks for a prompt, craft vivid detailed prompts and use fill_prompt
 - If user asks why generation fails, explain provider configuration
-- If no providers configured and no OnSpace fallback, suggest opening settings
+- If no providers configured, suggest opening settings
 - ALWAYS return valid JSON with both "message" and "action" keys
 - The "action" field must be null if no action is needed`;
 
@@ -108,11 +108,9 @@ async function callAvniChatViaProvider(
   // Build context-aware system prompt
   const stateContext = JSON.stringify({
     studioControlMode: state.studioControlMode,
-    onspaceAsFallback: state.onspaceAsFallback,
     activeBotProvider: state.activeBotProvider,
     providers: Object.fromEntries(
       Object.entries(state.providers)
-        .filter(([k]) => k !== 'onspace')
         .map(([k, v]) => [k, {
           enabled: v.settings.enabled,
           status: v.settings.status,
@@ -177,12 +175,7 @@ async function callAvniChatViaProvider(
     }
   }
 
-  // 2. OnSpace fallback
-  if (state.onspaceAsFallback) {
-    console.log('[AvniAI] Falling back to OnSpace AI for chat');
-    const result = await callAvniChatOnSpace(messages, currentPrompt);
-    return { ...(result as { message: string; action: AvniAction | null }), provider: 'onspace' };
-  }
+
 
   // 3. No provider configured
   return {
@@ -211,7 +204,7 @@ export default function AvniAIChat({ currentPrompt, onAction, onTriggerGenerate 
   // Determine provider status for indicator
   const chatProvider = hasConfiguredExternalProvider('chat')
     ? state.globalDefaults.chatDefault
-    : (state.onspaceAsFallback ? 'onspace' : null);
+    : null;
   const providerLabel = chatProvider
     ? (state.providers[chatProvider]?.label ?? chatProvider)
     : 'No provider';

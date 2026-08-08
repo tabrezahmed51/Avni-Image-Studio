@@ -8,11 +8,11 @@ Deno.serve(async (req) => {
   try {
     const { partialPrompt = '' } = await req.json();
 
-    const apiKey = Deno.env.get('ONSPACE_AI_API_KEY');
-    const baseUrl = Deno.env.get('ONSPACE_AI_BASE_URL');
+    const apiKey = Deno.env.get('AVNI_AI_API_KEY');
+    const baseUrl = Deno.env.get('AVNI_AI_BASE_URL');
 
     if (!apiKey || !baseUrl) {
-      throw new Error('OnSpace AI configuration missing');
+      throw new Error('Avni AI configuration missing');
     }
 
     const themes = [
@@ -57,7 +57,7 @@ Output ONLY a JSON array of 4 strings, no other text. Example:
 
     if (!response.ok) {
       const errorText = await response.text();
-      throw new Error(`OnSpace AI: ${errorText}`);
+      throw new Error(`Avni AI: ${errorText}`);
     }
 
     const data = await response.json();

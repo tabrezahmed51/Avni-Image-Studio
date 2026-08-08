@@ -13,11 +13,11 @@ Deno.serve(async (req) => {
       throw new Error('No prompt provided');
     }
 
-    const apiKey = Deno.env.get('ONSPACE_AI_API_KEY');
-    const baseUrl = Deno.env.get('ONSPACE_AI_BASE_URL');
+    const apiKey = Deno.env.get('AVNI_AI_API_KEY');
+    const baseUrl = Deno.env.get('AVNI_AI_BASE_URL');
 
     if (!apiKey || !baseUrl) {
-      throw new Error('OnSpace AI configuration missing');
+      throw new Error('Avni AI configuration missing');
     }
 
     const fullPrompt = style ? `${prompt}, ${style}` : prompt;
@@ -67,8 +67,8 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OnSpace AI Error:', errorText);
-      throw new Error(`OnSpace AI: ${errorText}`);
+      console.error('Avni AI Error:', errorText);
+      throw new Error(`Avni AI: ${errorText}`);
     }
 
     const data = await response.json();

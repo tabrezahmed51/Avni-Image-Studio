@@ -122,7 +122,7 @@ export default function AIIntegrationsModal({ open, onClose }: AIIntegrationsMod
       {/* Provider overview */}
       <div className="border-t border-border/30 pt-4">
         <h3 className="text-sm font-semibold text-foreground mb-1">Provider Overview</h3>
-        <p className="text-xs text-muted-foreground mb-3">Click a row to configure. External providers replace OnSpace AI credits.</p>
+        <p className="text-xs text-muted-foreground mb-3">Click a row to configure your active AI providers.</p>
         <div className="space-y-1.5">
           {ALL_PROVIDERS.map(p => {
             const config = state.providers[p];
@@ -148,30 +148,7 @@ export default function AIIntegrationsModal({ open, onClose }: AIIntegrationsMod
         </div>
       </div>
 
-      {/* OnSpace fallback */}
-      <div className="border-t border-border/30 pt-4">
-        <div className="flex items-start justify-between gap-3">
-          <div>
-            <h3 className="text-sm font-semibold text-foreground">Use OnSpace AI as Last-Resort Fallback</h3>
-            <p className="text-xs text-muted-foreground mt-0.5 leading-relaxed">
-              If all external providers fail, fall back to OnSpace AI (uses OnSpace credits). <strong className="text-amber-400">Currently OFF</strong> by default — enable only if needed.
-            </p>
-          </div>
-          <button
-            onClick={() => dispatch({ type: 'SET_ONSPACE_FALLBACK', enabled: !state.onspaceAsFallback })}
-            className={`relative w-10 h-5.5 rounded-full transition-colors shrink-0 mt-0.5 ${state.onspaceAsFallback ? 'bg-amber-500' : 'bg-secondary border border-border/60'}`}
-            style={{ width: 40, height: 22 }}
-          >
-            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-transform ${state.onspaceAsFallback ? 'translate-x-5' : 'translate-x-0.5'}`} />
-          </button>
-        </div>
-        {state.onspaceAsFallback && (
-          <div className="mt-2 px-3 py-2 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-300/90 flex items-start gap-2">
-            <HelpCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            OnSpace AI fallback is active — generation may use OnSpace credits if external providers fail.
-          </div>
-        )}
-      </div>
+
 
       {/* Active bot */}
       <div className="border-t border-border/30 pt-4">
@@ -330,7 +307,7 @@ export default function AIIntegrationsModal({ open, onClose }: AIIntegrationsMod
         {/* Footer */}
         <div className="flex items-center justify-between gap-3 px-5 py-3 border-t border-border/30 flex-shrink-0 bg-secondary/20">
           <p className="text-[10px] text-muted-foreground">
-            API keys stored in browser localStorage. Never sent to OnSpace servers.
+            API keys stored in browser localStorage. Never sent to external servers.
           </p>
           <div className="flex gap-2">
             <Button onClick={onClose} variant="outline" size="sm" className="text-xs border-border h-auto py-1.5 px-3">Cancel</Button>

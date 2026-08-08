@@ -6,8 +6,7 @@ export type AIProvider =
   | 'huggingface'
   | 'grok'
   | 'qwen'
-  | 'comfyui'
-  | 'onspace';
+  | 'comfyui';
 
 export type AIFeature =
   | 'chat'
@@ -97,7 +96,6 @@ export interface ProviderConfig {
 export interface AIIntegrationState {
   activeBotProvider: AIProvider;
   studioControlMode: StudioControlMode;
-  onspaceAsFallback: boolean; // If true, OnSpace AI is used as last-resort fallback
   providers: Record<AIProvider, ProviderConfig>;
   globalDefaults: {
     generationFallback: AIProvider[];
@@ -124,7 +122,6 @@ export type AIIntegrationAction =
   | { type: 'SET_ACTIVE_BOT_PROVIDER'; provider: AIProvider }
   | { type: 'SET_ADVANCED'; settings: Partial<AIIntegrationState['advancedSettings']> }
   | { type: 'SET_STUDIO_CONTROL_MODE'; mode: StudioControlMode }
-  | { type: 'SET_ONSPACE_FALLBACK'; enabled: boolean }
   | { type: 'HYDRATE_SETTINGS'; payload: AIIntegrationState };
 
 // ─── Route Request / Response ─────────────────────────────────────────

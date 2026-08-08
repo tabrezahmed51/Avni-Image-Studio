@@ -4,8 +4,7 @@
  * Unified provider-aware API layer.
  * 
  * Execution priority:
- * 1. User-configured external provider (Gemini, OpenRouter, OpenAI, etc.) 
- * 2. OnSpace AI edge functions (ONLY if onspaceAsFallback is enabled)
+ * 1. User-configured external provider (Gemini, OpenRouter, OpenAI, etc.)
  * 
  * All AI actions (generate, edit, inspire, chat) route through this module.
  */
@@ -44,7 +43,6 @@ function resolveChain(feature: AIFeature, state: AIIntegrationState): AIProvider
 
   // Add from global chain if provider is enabled and supports the feature
   for (const p of globalChain) {
-    if (p === 'onspace') continue; // Never include onspace in external chain
     const config = state.providers[p];
     if (!config) continue;
     if (!config.settings.enabled) continue;
@@ -57,7 +55,6 @@ function resolveChain(feature: AIFeature, state: AIIntegrationState): AIProvider
 
   // Add any remaining enabled/configured providers not already in chain
   for (const [pid, config] of Object.entries(state.providers) as [AIProvider, typeof state.providers[AIProvider]][]) {
-    if (pid === 'onspace') continue;
     if (!config.settings.enabled) continue;
     const hasKey = config.auth.apiKey || (pid === 'gemini' && import.meta.env.VITE_GEMINI_API_KEY);
     if (!hasKey && pid !== 'comfyui') continue;
@@ -273,7 +270,7 @@ export function hasConfiguredExternalProvider(feature: AIFeature): boolean {
 export function getActiveProviderLabel(feature: AIFeature): string {
   const state = getAIIntegrationState();
   const chain = resolveChain(feature, state);
-  if (chain.length === 0) return state.onspaceAsFallback ? 'OnSpace AI' : 'No provider';
+  if (chain.length === 0) return 'No provider';
   const first = chain[0];
   return state.providers[first]?.label ?? first;
 }

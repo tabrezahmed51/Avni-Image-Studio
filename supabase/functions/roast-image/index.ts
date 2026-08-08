@@ -15,14 +15,14 @@ Deno.serve(async (req) => {
 
     console.log('Starting roast generation...');
 
-    const apiKey = Deno.env.get('ONSPACE_AI_API_KEY');
-    const baseUrl = Deno.env.get('ONSPACE_AI_BASE_URL');
+    const apiKey = Deno.env.get('AVNI_AI_API_KEY');
+    const baseUrl = Deno.env.get('AVNI_AI_BASE_URL');
 
     if (!apiKey || !baseUrl) {
-      throw new Error('OnSpace AI configuration missing');
+      throw new Error('Avni AI configuration missing');
     }
 
-    // Call OnSpace AI using Nano Banana Pro (google/gemini-3-pro-image-preview)
+    // Call Avni AI
     const response = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: {
@@ -57,8 +57,8 @@ Deno.serve(async (req) => {
 
     if (!response.ok) {
       const errorText = await response.text();
-      console.error('OnSpace AI Error:', errorText);
-      throw new Error(`OnSpace AI request failed: ${errorText}`);
+      console.error('Avni AI Error:', errorText);
+      throw new Error(`Avni AI request failed: ${errorText}`);
     }
 
     const data = await response.json();

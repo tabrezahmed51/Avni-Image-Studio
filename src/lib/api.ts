@@ -11,8 +11,8 @@ import { getAIIntegrationState } from '@/features/ai-integrations/store/aiIntegr
 // Re-export supabase for backward-compat
 export { supabase } from '@/lib/supabaseClient';
 
-// ─── Edge function invoker (OnSpace backend) ──────────────────────────
-async function invokeFunction(name: string, body: object) {
+// ─── Edge function invoker (Supabase backend) ──────────────────────────
+export async function invokeFunction(name: string, body: object) {
   const { data, error } = await supabase.functions.invoke(name, { body });
   if (error) {
     let errorMessage = error.message;
@@ -53,7 +53,7 @@ export async function generateImage(
   const isEdit = Boolean(imageBase64);
   const feature = isEdit ? 'image_edit' : 'text_to_image';
 
-  console.log(`[api] generateImage | mode=${isEdit ? 'edit' : 'generate'} | prompt="${prompt.slice(0, 60)}" | onspaceAsFallback=${state.onspaceAsFallback}`);
+  console.log(`[api] generateImage | mode=${isEdit ? 'edit' : 'generate'} | prompt="${prompt.slice(0, 60)}"`);
 
   // 1. Try external providers first
   if (hasConfiguredExternalProvider(feature)) {
@@ -74,17 +74,10 @@ export async function generateImage(
     }
   }
 
-  // 2. OnSpace AI fallback (only if user has opted in)
-  if (state.onspaceAsFallback) {
-    console.log('[api] Falling back to OnSpace AI backend');
-    const result = await invokeFunction('generate-image', { prompt, aspectRatio, style, imageBase64 });
-    return { ...result, provider: 'onspace' };
-  }
-
-  // 3. No configured provider and OnSpace fallback disabled
+  // 2. No configured provider
   if (!hasConfiguredExternalProvider(feature)) {
     throw new Error(
-      'No AI provider configured. Go to Settings (⚙) → AI Integrations to add your Gemini, OpenRouter, or OpenAI API key. Or enable "Use OnSpace AI as fallback" in Advanced settings.'
+      'No AI provider configured. Go to Settings (⚙) → AI Integrations to add your Gemini, OpenRouter, or OpenAI API key.'
     );
   }
 
@@ -96,7 +89,7 @@ export async function getInspirePrompts(
   partialPrompt = ''
 ): Promise<{ prompts: string[]; theme: string }> {
   const state = getAIIntegrationState();
-  console.log('[api] getInspirePrompts | onspaceAsFallback:', state.onspaceAsFallback);
+  console.log('[api] getInspirePrompts');
 
   // 1. Try external providers
   if (hasConfiguredExternalProvider('inspire')) {
@@ -112,12 +105,7 @@ export async function getInspirePrompts(
     }
   }
 
-  // 2. OnSpace fallback
-  if (state.onspaceAsFallback) {
-    return invokeFunction('inspire-prompts', { partialPrompt });
-  }
-
-  // 3. No provider
+  // 2. No provider
   if (!hasConfiguredExternalProvider('inspire')) {
     throw new Error('No AI provider configured for Inspire Me. Go to Settings → AI Integrations.');
   }
@@ -125,13 +113,7 @@ export async function getInspirePrompts(
   throw new Error('Inspire prompts failed. Check Settings → AI Integrations.');
 }
 
-// ─── Avni AI Chat (for edge function path only — see AvniAIChat.tsx for provider path) ──
-export async function callAvniChatOnSpace(
-  messages: { role: string; content: string }[],
-  currentPrompt: string
-): Promise<{ message: string; action: unknown }> {
-  return invokeFunction('avni-ai-chat', { messages, currentPrompt });
-}
+
 
 // ─── Utils ────────────────────────────────────────────────────────────
 export function convertImageToBase64(file: File): Promise<string> {

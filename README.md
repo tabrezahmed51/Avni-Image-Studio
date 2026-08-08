@@ -1,61 +1,61 @@
-# Welcome to your OnSpace project
+# Avni Image Studio
 
-## How can I edit this code?
+Avni Image Studio is a state-of-the-art Web Application designed for creative image generation and editing. Powered by Google Gemini AI, Ollama, and Supabase backend services, it offers a fast, fluid, and premium creative workflow.
 
-There are several ways of editing your application.
+## Features
 
-**Use OnSpace**
+- **Text to Image Generation**: Transform rich descriptive prompts into detailed visuals.
+- **Image Editing & Inpainting**: Upload an image and request target modifications using natural language prompts.
+- **Inspire Me**: Instantly autocomplete and enhance prompts with themes and dynamic presets.
+- **AI Chat Assistant (Avni)**: An agentic chat interface that helps you write prompts, automatically configures control parameters, and guides your studio usage.
+- **Community Gallery**: A public gallery displaying featured generations with metadata, filters, and bulk ZIP download.
+- **Personal Sidebar History**: Search, filter, and sort through all of your past generations.
 
-Simply visit the [OnSpace Project]() and start prompting.
+## Tech Stack
 
-Changes made via OnSpace will be committed automatically to this repo.
+- **Frontend**: React + TypeScript + Vite + Tailwind CSS v4 + shadcn/ui
+- **Database & Auth**: Supabase (PostgreSQL, Row Level Security, PKCE OAuth flows)
+- **AI Engine**: Gemini API & Ollama (local LLM/LMM instances)
+- **Deployment**: Vercel production hosting
 
-**Use your preferred IDE**
+## Local Setup
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in OnSpace.
+### Prerequisites
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+- Node.js (v20 or higher)
+- npm or bun
 
-Follow these steps:
+### Setup Steps
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+1. **Clone the repository**:
+   ```bash
+   git clone https://github.com/tabrezahmed51/Avni-Image-Studio.git
+   cd Avni-Image-Studio
+   ```
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+2. **Configure Environment Variables**:
+   Create a `.env` file in the root directory:
+   ```env
+   VITE_SUPABASE_URL=your_supabase_url
+   VITE_SUPABASE_ANON_KEY=your_supabase_anon_key
+   VITE_GEMINI_API_KEY=your_gemini_api_key
+   ```
 
-# Step 3: Install the necessary dependencies.
-npm i
+3. **Install Dependencies**:
+   ```bash
+   npm install --legacy-peer-deps
+   ```
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
-npm run dev
+4. **Run Development Server**:
+   ```bash
+   npm run dev
+   ```
+
+## Production Deployment
+
+This project is configured for deployment to **Vercel** with full Single Page Application (SPA) routing support:
+```bash
+# Production deploy via Vercel CLI
+npx vercel --prod
 ```
-
-**Edit a file directly in GitHub**
-
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
-
-**Use GitHub Codespaces**
-
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
-
-## What technologies are used for this project?
-
-This project is built with:
-
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
-
-## How can I deploy this project?
-
-Simply open [OnSpace]() and click on Share -> Publish.
+The application routing rules are handled via the `vercel.json` rewrites configuration.

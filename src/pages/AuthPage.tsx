@@ -59,7 +59,7 @@ const authService = {
     const left = Math.max(0, window.screenX + (window.outerWidth - w) / 2);
     const top = Math.max(0, window.screenY + (window.outerHeight - h) / 2);
     const popup = iframe
-      ? window.open('about:blank', 'onspace-oauth', `popup=yes,width=${w},height=${h},left=${Math.round(left)},top=${Math.round(top)}`)
+      ? window.open('about:blank', 'avni-oauth', `popup=yes,width=${w},height=${h},left=${Math.round(left)},top=${Math.round(top)}`)
       : null;
 
     if (iframe && !popup) {

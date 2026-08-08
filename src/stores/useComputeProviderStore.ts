@@ -1,6 +1,6 @@
 /**
  * useComputeProviderStore — toggles between:
- *   'cloud'  → Supabase Edge Functions (OnSpace AI backend)
+ *   'cloud'  → Supabase Edge Functions backend
  *   'local'  → Local Ollama instance (http://localhost:11434)
  *   'ollama_cloud' → Ollama Cloud API
  */

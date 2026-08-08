@@ -121,16 +121,7 @@ export const providerRegistry: Record<AIProvider, Partial<ProviderConfig>> = {
     },
     models: COMFYUI_MODELS,
   },
-  onspace: {
-    provider: 'onspace',
-    label: 'OnSpace AI (Built-in)',
-    capabilities: {
-      chat: true, text_to_image: true, image_to_image: false,
-      image_edit: true, prompt_enhance: true, inspire: true,
-    },
-    endpoints: {},
-    models: [],
-  },
+
 };
 
 export const PROVIDER_DESCRIPTIONS: Record<AIProvider, string> = {
@@ -141,12 +132,11 @@ export const PROVIDER_DESCRIPTIONS: Record<AIProvider, string> = {
   grok: 'X AI\'s Grok models for vision, chat, and image generation.',
   qwen: 'Alibaba\'s Qwen models — strong image edit fallback in the default editing chain.',
   comfyui: 'Self-hosted ComfyUI workflows for fully custom T2I/I2I pipelines.',
-  onspace: 'OnSpace built-in AI (uses OnSpace credits). Used as optional last-resort fallback.',
 };
 
 export const PROVIDER_ICONS: Record<AIProvider, string> = {
   openrouter: '🔀', openai: '✦', gemini: '◆',
-  huggingface: '🤗', grok: '𝕏', qwen: '⚡', comfyui: '🖥', onspace: '🚀',
+  huggingface: '🤗', grok: '𝕏', qwen: '⚡', comfyui: '🖥',
 };
 
 export const CAPABILITY_LABELS: Record<keyof ProviderCapabilities, string> = {
