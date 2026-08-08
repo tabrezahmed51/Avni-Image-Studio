@@ -6,6 +6,7 @@ import {
 import { supabase } from '@/lib/supabaseClient';
 import { FunctionsHttpError } from '@supabase/supabase-js';
 import { chatViaProvider, hasConfiguredExternalProvider } from '@/lib/providerApi';
+import { callAvniChatOnSpace } from '@/lib/api';
 import { getAIIntegrationState } from '@/features/ai-integrations/store/aiIntegrationStore';
 import { useAIIntegrationStore } from '@/features/ai-integrations/store/aiIntegrationStore';
 import { toast } from 'sonner';
@@ -133,8 +134,39 @@ async function callAvniChatViaProvider(
         console.log(`[AvniAI] Chat response via: ${result.provider}`);
         // Try to parse as JSON action response
         try {
-          const parsed = JSON.parse(result.text);
-          if (parsed.message) return { ...parsed, provider: result.provider };
+          const trimmed = result.text.trim();
+          let parsed;
+          try {
+            parsed = JSON.parse(trimmed);
+          } catch {
+            const jsonMatch = trimmed.match(/\{[\s\S]*\}/);
+            if (jsonMatch) {
+              parsed = JSON.parse(jsonMatch[0]);
+            } else {
+              throw new Error("No JSON object found");
+            }
+          }
+          if (parsed && typeof parsed === 'object') {
+            // Action payload shape validation
+            let action: AvniAction | null = null;
+            if (parsed.action && typeof parsed.action === 'object' && parsed.action.type) {
+              const actionType = parsed.action.type;
+              const allowedTypes = ['fill_prompt', 'navigate', 'set_style', 'set_aspect_ratio', 'open_history', 'switch_tab', 'open_settings', 'trigger_generate'];
+              if (allowedTypes.includes(actionType)) {
+                action = {
+                  type: actionType,
+                  payload: typeof parsed.action.payload === 'object' && parsed.action.payload !== null
+                    ? JSON.stringify(parsed.action.payload)
+                    : parsed.action.payload
+                };
+              }
+            }
+            return {
+              message: parsed.message || result.text,
+              action,
+              provider: result.provider
+            };
+          }
         } catch {
           // Plain text response — wrap it
           return { message: result.text, action: null, provider: result.provider };
@@ -148,17 +180,8 @@ async function callAvniChatViaProvider(
   // 2. OnSpace fallback
   if (state.onspaceAsFallback) {
     console.log('[AvniAI] Falling back to OnSpace AI for chat');
-    const { data, error } = await supabase.functions.invoke('avni-ai-chat', {
-      body: { messages, currentPrompt },
-    });
-    if (error) {
-      let msg = error.message;
-      if (error instanceof FunctionsHttpError) {
-        try { const t = await error.context?.text(); msg = `[${error.context?.status}] ${t || msg}`; } catch {}
-      }
-      throw new Error(msg);
-    }
-    return { ...(data as { message: string; action: AvniAction | null }), provider: 'onspace' };
+    const result = await callAvniChatOnSpace(messages, currentPrompt);
+    return { ...(result as { message: string; action: AvniAction | null }), provider: 'onspace' };
   }
 
   // 3. No provider configured
@@ -180,6 +203,7 @@ export default function AvniAIChat({ currentPrompt, onAction, onTriggerGenerate 
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [lastReadMessageCount, setLastReadMessageCount] = useState(1);
   const bottomRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLTextAreaElement>(null);
   const { state } = useAIIntegrationStore();
@@ -198,8 +222,16 @@ export default function AvniAIChat({ currentPrompt, onAction, onTriggerGenerate 
   }, [open]);
 
   useEffect(() => {
-    bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
-  }, [messages]);
+    if (open) {
+      bottomRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, open]);
+
+  useEffect(() => {
+    if (open) {
+      setLastReadMessageCount(messages.length);
+    }
+  }, [open, messages.length]);
 
   const handleAction = useCallback((action: AvniAction) => {
     switch (action.type) {
@@ -300,7 +332,7 @@ export default function AvniAIChat({ currentPrompt, onAction, onTriggerGenerate 
       </button>
 
       {/* Unread dot */}
-      {!open && messages.length > 1 && (
+      {!open && messages.length > lastReadMessageCount && (
         <div className="fixed bottom-[66px] right-5 z-50 w-3 h-3 rounded-full bg-studio-gold border-2 border-background animate-pulse" />
       )}
 

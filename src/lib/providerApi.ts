@@ -48,7 +48,8 @@ function resolveChain(feature: AIFeature, state: AIIntegrationState): AIProvider
     const config = state.providers[p];
     if (!config) continue;
     if (!config.settings.enabled) continue;
-    if (!config.auth.apiKey && p !== 'comfyui') continue; // Skip unconfigured providers
+    const hasKey = config.auth.apiKey || (p === 'gemini' && import.meta.env.VITE_GEMINI_API_KEY);
+    if (!hasKey && p !== 'comfyui') continue; // Skip unconfigured providers
     const caps = config.capabilities as Record<string, boolean>;
     if (!caps[feature]) continue;
     if (!chain.includes(p)) chain.push(p);
@@ -58,7 +59,8 @@ function resolveChain(feature: AIFeature, state: AIIntegrationState): AIProvider
   for (const [pid, config] of Object.entries(state.providers) as [AIProvider, typeof state.providers[AIProvider]][]) {
     if (pid === 'onspace') continue;
     if (!config.settings.enabled) continue;
-    if (!config.auth.apiKey && pid !== 'comfyui') continue;
+    const hasKey = config.auth.apiKey || (pid === 'gemini' && import.meta.env.VITE_GEMINI_API_KEY);
+    if (!hasKey && pid !== 'comfyui') continue;
     const caps = config.capabilities as Record<string, boolean>;
     if (!caps[feature]) continue;
     if (!chain.includes(pid)) chain.push(pid);

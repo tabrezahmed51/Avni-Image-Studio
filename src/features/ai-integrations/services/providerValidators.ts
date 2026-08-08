@@ -5,7 +5,8 @@ export function validateProviderConfig(config: ProviderConfig): ValidationResult
   const { provider, auth, endpoints, capabilities } = config;
 
   // API key required for non-self-hosted
-  if (!capabilities.selfHosted && !auth.apiKey) {
+  const hasKey = auth.apiKey || (provider === 'gemini' && import.meta.env.VITE_GEMINI_API_KEY);
+  if (!capabilities.selfHosted && !hasKey) {
     errors.push('API key is required');
   }
 

@@ -20,12 +20,24 @@ async function invokeFunction(name: string, body: object) {
       try {
         const statusCode = error.context?.status ?? 500;
         const textContent = await error.context?.text();
-        errorMessage = `[Code: ${statusCode}] ${textContent || error.message || 'Unknown error'}`;
+        if (textContent) {
+          try {
+            const parsed = JSON.parse(textContent);
+            errorMessage = parsed.error || parsed.message || textContent;
+          } catch {
+            errorMessage = textContent;
+          }
+        }
+        errorMessage = `[Code: ${statusCode}] ${errorMessage}`;
       } catch {
         errorMessage = `${error.message || 'Failed to read response'}`;
       }
     }
     throw new Error(errorMessage);
+  }
+  // Check for HTTP 200 payloads that contain error properties
+  if (data && typeof data === 'object' && 'error' in data) {
+    throw new Error(String(data.error));
   }
   return data;
 }
@@ -65,7 +77,8 @@ export async function generateImage(
   // 2. OnSpace AI fallback (only if user has opted in)
   if (state.onspaceAsFallback) {
     console.log('[api] Falling back to OnSpace AI backend');
-    return invokeFunction('generate-image', { prompt, aspectRatio, style, imageBase64 });
+    const result = await invokeFunction('generate-image', { prompt, aspectRatio, style, imageBase64 });
+    return { ...result, provider: 'onspace' };
   }
 
   // 3. No configured provider and OnSpace fallback disabled
@@ -125,7 +138,7 @@ export function convertImageToBase64(file: File): Promise<string> {
   return new Promise((resolve, reject) => {
     const reader = new FileReader();
     reader.onload = () => resolve(reader.result as string);
-    reader.onerror = reject;
+    reader.onerror = () => reject(new Error(reader.error?.message || 'File reading failed'));
     reader.readAsDataURL(file);
   });
 }
@@ -139,21 +152,35 @@ export async function downloadAllImagesAsZip(
   const folder = zip.folder('avni-studio-gallery')!;
   let packed = 0;
   const total = images.length;
+  
+  const usedFilenames = new Set<string>();
 
-  await Promise.all(
-    images.map(async ({ url, filename }) => {
-      try {
-        const res = await fetch(url);
-        const blob = await res.blob();
-        folder.file(filename, blob);
-      } catch {
-        console.warn(`Skipped ${filename}`);
-      } finally {
-        packed++;
-        onProgress?.(packed, total);
+  for (const { url, filename } of images) {
+    try {
+      const res = await fetch(url);
+      if (!res.ok) throw new Error(`HTTP ${res.status}`);
+      const blob = await res.blob();
+      
+      // Deduplicate filename
+      let uniqueName = filename;
+      const dotIndex = filename.lastIndexOf('.');
+      const baseName = dotIndex !== -1 ? filename.slice(0, dotIndex) : filename;
+      const ext = dotIndex !== -1 ? filename.slice(dotIndex) : '';
+      let counter = 1;
+      while (usedFilenames.has(uniqueName)) {
+        uniqueName = `${baseName}_${counter}${ext}`;
+        counter++;
       }
-    })
-  );
+      usedFilenames.add(uniqueName);
+
+      folder.file(uniqueName, blob);
+    } catch (err) {
+      console.warn(`Skipped ${filename} due to error:`, err);
+    } finally {
+      packed++;
+      onProgress?.(packed, total);
+    }
+  }
 
   const blob = await zip.generateAsync({ type: 'blob' });
   const a = document.createElement('a');

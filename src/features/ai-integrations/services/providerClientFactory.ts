@@ -17,7 +17,7 @@ function log(provider: string, ...args: unknown[]) {
 
 // ─── Gemini Client ────────────────────────────────────────────────────
 function createGeminiClient(config: ProviderConfig): ProviderClient {
-  const apiKey = config.auth.apiKey ?? '';
+  const apiKey = config.auth.apiKey || import.meta.env.VITE_GEMINI_API_KEY || '';
   const base = 'https://generativelanguage.googleapis.com';
 
   return {
@@ -52,7 +52,7 @@ function createGeminiClient(config: ProviderConfig): ProviderClient {
     },
 
     async chat(req: AIRouteRequest): Promise<AIRouteResponse> {
-      const model = config.settings.preferredModelByFeature['chat'] ?? 'gemini-2.0-flash';
+      const model = config.settings.preferredModelByFeature['chat'] ?? 'gemini-3-flash-preview';
       const url = `${base}/v1beta/models/${model}:generateContent?key=${apiKey}`;
       log('gemini', 'Chat request to model:', model);
       const res = await fetch(url, {
@@ -73,7 +73,7 @@ function createGeminiClient(config: ProviderConfig): ProviderClient {
     },
 
     async generateTextToImage(req: AIRouteRequest): Promise<AIRouteResponse> {
-      const model = config.settings.preferredModelByFeature['text_to_image'] ?? 'gemini-2.0-flash-preview-image-generation';
+      const model = config.settings.preferredModelByFeature['text_to_image'] ?? 'gemini-2.5-flash-image';
       const fullPrompt = req.stylePreset ? `${req.prompt}, ${req.stylePreset}` : (req.prompt ?? '');
       const url = `${base}/v1beta/models/${model}:generateContent?key=${apiKey}`;
       log('gemini', 'T2I request model:', model, 'prompt:', fullPrompt.slice(0, 80));
@@ -100,7 +100,7 @@ function createGeminiClient(config: ProviderConfig): ProviderClient {
     },
 
     async generateImageEdit(req: AIRouteRequest): Promise<AIRouteResponse> {
-      const model = config.settings.preferredModelByFeature['image_edit'] ?? 'gemini-2.0-flash-preview-image-generation';
+      const model = config.settings.preferredModelByFeature['image_edit'] ?? 'gemini-2.5-flash-image';
       const url = `${base}/v1beta/models/${model}:generateContent?key=${apiKey}`;
       const imageData = req.image as string;
       const mimeType = imageData.match(/data:(image\/\w+);/)?.[1] ?? 'image/png';
