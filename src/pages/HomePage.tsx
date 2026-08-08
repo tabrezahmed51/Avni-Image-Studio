@@ -20,6 +20,8 @@ import HistorySidebar from '@/components/features/HistorySidebar';
 import LightboxModal, { type LightboxImage } from '@/components/features/LightboxModal';
 import BeforeAfterSlider from '@/components/features/BeforeAfterSlider';
 import AvniAIChat, { type AvniAction } from '@/components/features/AvniAIChat';
+import { AnimatePresence } from 'framer-motion';
+import StartupOverlay from '@/components/features/StartupOverlay';
 
 // ─── Constants ──────────────────────────────────────────────────────
 const GALLERY_PROMPTS = [
@@ -358,6 +360,10 @@ export default function HomePage() {
   // Zustand image store for undo/redo tracking
   const { setActiveImage } = useImageStore();
 
+  const [showStartup, setShowStartup] = useState(() => {
+    return sessionStorage.getItem('hasSeenStartupVideo') !== 'true';
+  });
+
   const [activeTab, setActiveTab] = useState<'generate' | 'edit'>('generate');
   const [prompt, setPrompt] = useState('');
   const [style, setStyle] = useState('');
@@ -509,7 +515,13 @@ export default function HomePage() {
   const scrollTo = (id: string) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
 
   return (
-    <div className="min-h-screen bg-background mesh-bg overflow-x-hidden">
+    <>
+      <AnimatePresence>
+        {showStartup && (
+          <StartupOverlay onClose={() => setShowStartup(false)} />
+        )}
+      </AnimatePresence>
+      <div className="min-h-screen bg-background mesh-bg overflow-x-hidden">
       {/* Lightbox */}
       {lightboxOpen && lightboxImages.length > 0 && <LightboxModal images={lightboxImages} initialIndex={lightboxIndex} onClose={() => setLightboxOpen(false)} />}
 
@@ -739,5 +751,6 @@ export default function HomePage() {
         </div>
       </footer>
     </div>
+    </>
   );
 }
