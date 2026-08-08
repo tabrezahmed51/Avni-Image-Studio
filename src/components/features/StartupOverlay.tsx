@@ -88,7 +88,7 @@ export default function StartupOverlay({ onClose }: StartupOverlayProps) {
     <motion.div
       initial={{ opacity: 1 }}
       exit={{ opacity: 0, transition: { duration: 0.8, ease: 'easeInOut' } }}
-      className="fixed inset-0 z-[9999] bg-background flex flex-col justify-between items-center py-6 px-6 overflow-hidden select-none"
+      className="fixed inset-0 z-[9999] bg-background overflow-hidden select-none"
     >
       {/* Background Video - High Quality, No Blur, No Filter */}
       <video
@@ -102,7 +102,7 @@ export default function StartupOverlay({ onClose }: StartupOverlayProps) {
       />
 
       {/* Top Header - Controls overlaying the video */}
-      <div className="relative z-10 w-full max-w-5xl flex justify-between items-center">
+      <div className="absolute top-6 left-6 right-6 z-10 flex justify-between items-center">
         <motion.div 
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -129,96 +129,83 @@ export default function StartupOverlay({ onClose }: StartupOverlayProps) {
         )}
       </div>
 
-      {/* Bottom Bar - Floating Glass Dashboard Card */}
-      <div className="relative z-10 w-full max-w-5xl mt-auto pb-2">
-        <motion.div
-          initial={{ opacity: 0, y: 30 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.8, ease: 'easeOut' }}
-          className="w-full backdrop-blur-md bg-black/60 border border-white/10 rounded-2xl p-6 shadow-2xl flex flex-col md:flex-row items-center justify-between gap-6"
-        >
-          {/* Left Side: Branding / Loading Info */}
-          <div className="flex-1 w-full min-w-0 text-left">
-            <div className="flex items-center flex-wrap gap-2.5 mb-1.5">
-              <Sparkles className="w-4 h-4 text-primary animate-pulse shrink-0" />
-              <h1 className="font-display text-lg font-bold tracking-tight text-white truncate">
-                Avni Image Studio
-              </h1>
-              <span className="text-[10px] text-studio-gold italic font-display opacity-80 shrink-0">
-                "Imagination is next reality"
-              </span>
-            </div>
-            
-            <div className="text-xs text-white/70 min-h-[18px]">
-              {!isLoaded ? (
-                <div className="flex items-center gap-2">
-                  <span className="inline-block w-1.5 h-1.5 rounded-full bg-primary animate-ping shrink-0" />
-                  <span className="animate-pulse">{loadingPhase}</span>
-                </div>
-              ) : (
-                <p>Branding environment initialized. Click Enter Studio to launch the workspace.</p>
-              )}
-            </div>
+      {/* Bottom Bar - Complete Bottom Flat Slim Bar */}
+      <motion.div
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.8, ease: 'easeOut' }}
+        className="absolute bottom-0 left-0 right-0 w-full z-10 backdrop-blur-md bg-black/85 border-t border-white/10 py-3 px-6 flex flex-row items-center justify-between gap-4 select-none"
+      >
+        {/* Left: Branding & Status */}
+        <div className="flex items-center gap-3 min-w-0">
+          <Sparkles className="w-4 h-4 text-primary animate-pulse shrink-0" />
+          <span className="font-display text-sm font-bold text-white tracking-tight shrink-0">
+            Avni Image Studio
+          </span>
+          <span className="text-[10px] text-studio-gold italic font-display hidden sm:inline shrink-0">
+            "Imagination is next reality"
+          </span>
+          
+          <span className="text-white/20 hidden md:inline">|</span>
+          
+          <div className="text-[10px] text-white/70 truncate hidden md:block">
+            {!isLoaded ? (
+              <span className="animate-pulse">{loadingPhase}</span>
+            ) : (
+              <span className="text-emerald-400 font-medium">Ready to Create</span>
+            )}
           </div>
-
-          {/* Center: Progress Slider (if loading) */}
-          {!isLoaded ? (
-            <div className="w-full md:max-w-xs flex flex-col gap-1.5 shrink-0">
-              <div className="flex justify-between items-center text-[9px] text-white/50 font-mono tracking-wider">
-                <span>STARTING WORKSPACE</span>
-                <span>{loadingProgress}%</span>
-              </div>
-              <div className="w-full h-1 bg-white/10 rounded-full overflow-hidden">
-                <motion.div
-                  className="h-full bg-primary"
-                  style={{ width: `${loadingProgress}%` }}
-                />
-              </div>
-            </div>
-          ) : null}
-
-          {/* Right Side: Action Controls */}
-          <div className="flex items-center gap-4 shrink-0 w-full md:w-auto justify-end">
-            <AnimatePresence mode="wait">
-              {!isLoaded ? (
-                <motion.button
-                  key="skip"
-                  initial={{ opacity: 0 }}
-                  animate={{ opacity: 0.7 }}
-                  exit={{ opacity: 0 }}
-                  whileHover={{ opacity: 1 }}
-                  onClick={handleEnter}
-                  className="text-xs text-white/70 hover:text-white transition-colors uppercase tracking-widest cursor-pointer px-3 py-1.5 font-medium"
-                >
-                  Skip & Enter
-                </motion.button>
-              ) : (
-                <motion.div
-                  key="enter-btn"
-                  initial={{ opacity: 0, scale: 0.95 }}
-                  animate={{ opacity: 1, scale: 1 }}
-                  exit={{ opacity: 0 }}
-                  transition={{ type: 'spring', stiffness: 200, damping: 15 }}
-                >
-                  <Button
-                    onClick={handleEnter}
-                    className="studio-gradient text-white border-0 text-xs px-6 py-3 h-auto rounded-xl hover:scale-105 active:scale-95 transition-all shadow-xl shadow-violet-500/20"
-                  >
-                    Enter Studio
-                    <ArrowRight className="w-3.5 h-3.5 ml-1.5 animate-bounce-x" />
-                  </Button>
-                </motion.div>
-              )}
-            </AnimatePresence>
-          </div>
-        </motion.div>
-
-        {/* Floating copyright labels */}
-        <div className="flex justify-between items-center px-4 mt-3 text-[9px] text-white/40 tracking-widest uppercase select-none">
-          <span>Powered by Gemini & Supabase</span>
-          <span>© 2026 AVNI</span>
         </div>
-      </div>
+
+        {/* Center/Progress: loading bar (only shown if loading) */}
+        {!isLoaded ? (
+          <div className="flex items-center gap-3 shrink-0">
+            <span className="text-[9px] text-white/50 font-mono tracking-wider">LOADING</span>
+            <div className="w-20 sm:w-32 h-1 bg-white/10 rounded-full overflow-hidden">
+              <motion.div
+                className="h-full bg-primary"
+                style={{ width: `${loadingProgress}%` }}
+              />
+            </div>
+            <span className="text-[10px] text-white/50 font-mono w-8 text-right">{loadingProgress}%</span>
+          </div>
+        ) : null}
+
+        {/* Right: Actions */}
+        <div className="flex items-center gap-4 shrink-0 justify-end">
+          <AnimatePresence mode="wait">
+            {!isLoaded ? (
+              <motion.button
+                key="skip"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 0.7 }}
+                exit={{ opacity: 0 }}
+                whileHover={{ opacity: 1 }}
+                onClick={handleEnter}
+                className="text-[10px] text-white/70 hover:text-white transition-colors uppercase tracking-widest font-semibold cursor-pointer py-1 px-2.5"
+              >
+                Skip
+              </motion.button>
+            ) : (
+              <motion.div
+                key="enter-btn"
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0 }}
+                transition={{ type: 'spring', stiffness: 200, damping: 15 }}
+              >
+                <Button
+                  onClick={handleEnter}
+                  className="studio-gradient text-white border-0 text-xs px-4 h-8 rounded-lg hover:scale-105 active:scale-95 transition-all shadow-md shadow-violet-500/10 flex items-center gap-1"
+                >
+                  Enter Studio
+                  <ArrowRight className="w-3 h-3 ml-0.5 animate-bounce-x" />
+                </Button>
+              </motion.div>
+            )}
+          </AnimatePresence>
+        </div>
+      </motion.div>
     </motion.div>
   );
 }
