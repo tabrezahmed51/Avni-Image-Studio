@@ -1,3 +1,5 @@
+![Avni Image Studio Banner](public/banner.png)
+
 # Avni Image Studio
 
 Avni Image Studio is a state-of-the-art Web Application designed for creative image generation and editing. Powered by Google Gemini AI, Ollama, and Supabase backend services, it offers a fast, fluid, and premium creative workflow.
