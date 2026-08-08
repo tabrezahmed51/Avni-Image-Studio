@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import { Toaster } from 'sonner';
 import { AuthProvider } from '@/contexts/AuthContext';
@@ -8,13 +9,22 @@ import OAuthCallbackPage from '@/pages/OAuthCallbackPage';
 import AdminPage from '@/pages/AdminPage';
 import NotFound from '@/pages/NotFound';
 import GalleryPage from '@/pages/GalleryPage';
+import { AnimatePresence } from 'framer-motion';
+import StartupOverlay from '@/components/features/StartupOverlay';
 
 // Robots / crawler meta tag is in index.html
 // Additional security: block iframe embedding via CSP in index.html
 
 export default function App() {
+  const [showStartup, setShowStartup] = useState(true);
+
   return (
     <AuthProvider>
+      <AnimatePresence>
+        {showStartup && (
+          <StartupOverlay onClose={() => setShowStartup(false)} />
+        )}
+      </AnimatePresence>
       <Router>
         <Toaster
           position="top-center"
