@@ -420,7 +420,7 @@ export default function AuthPage() {
       onClick={handleGoogleSignIn}
       disabled={loading}
       variant="outline"
-      className="w-full border-border hover:border-primary/40 bg-secondary/30 hover:bg-secondary/60 flex items-center gap-3 py-3 h-auto"
+      className="w-full auth-btn-outline flex items-center justify-center gap-3 py-3 h-12 rounded-xl"
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -428,11 +428,10 @@ export default function AuthPage() {
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
       </svg>
-      <span className="text-sm font-medium">Continue with Google</span>
+      <span className="text-sm font-semibold text-white">Continue with Google</span>
     </Button>
   );
 
-  // ── Render ─────────────────────────────────────────────────────────
   return (
     <div className="min-h-screen bg-[#07070a] flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden select-none">
       <style>{`
@@ -440,7 +439,6 @@ export default function AuthPage() {
           font-family: 'Montserrat', 'Inter', sans-serif;
           font-weight: 900;
           text-transform: uppercase;
-          letter-spacing: 0.12em;
           background: linear-gradient(
             to bottom,
             #ffffff 0%,
@@ -453,59 +451,102 @@ export default function AuthPage() {
           );
           -webkit-background-clip: text;
           -webkit-text-fill-color: transparent;
-          filter: drop-shadow(0 0 18px rgba(168, 85, 247, 0.7)) /* Neon Purple Glow */
-                  drop-shadow(0 4px 20px rgba(234, 179, 8, 0.55)); /* Golden Glitter Drop Shadow */
+          filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.65))
+                  drop-shadow(0 4px 25px rgba(234, 179, 8, 0.5));
         }
         .glassmorphic-auth-card {
-          backdrop-filter: blur(25px);
-          background: rgba(10, 10, 14, 0.72);
-          border: 1px solid rgba(255, 255, 255, 0.08);
+          backdrop-filter: blur(30px);
+          background: rgba(10, 10, 15, 0.78);
+          border: 1.5px solid rgba(234, 179, 8, 0.25);
           box-shadow: 
-            0 24px 70px rgba(0, 0, 0, 0.65),
-            inset 0 0 0 1px rgba(255, 255, 255, 0.04),
-            0 0 50px rgba(168, 85, 247, 0.12);
+            0 24px 75px rgba(0, 0, 0, 0.8),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+            0 0 50px rgba(168, 85, 247, 0.18),
+            0 0 20px rgba(234, 179, 8, 0.1);
+        }
+        .auth-btn-gold {
+          background: linear-gradient(135deg, #ffe27d 0%, #eab308 100%);
+          color: #0c0a09;
+          font-weight: 800;
+          border: 1px solid rgba(254, 240, 138, 0.35);
+          box-shadow: 0 4px 14px rgba(234, 179, 8, 0.25);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .auth-btn-gold:hover {
+          background: linear-gradient(135deg, #ffffff 0%, #ffe27d 100%);
+          box-shadow: 0 6px 20px rgba(234, 179, 8, 0.5);
+          transform: translateY(-1px) scale(1.01);
+        }
+        .auth-btn-gold:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .auth-btn-outline {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          color: #f1f5f9;
+          transition: all 0.25s ease;
+        }
+        .auth-btn-outline:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(234, 179, 8, 0.45);
+          color: #ffffff;
+        }
+        .auth-input {
+          background: rgba(255, 255, 255, 0.04) !important;
+          border: 1px solid rgba(255, 255, 255, 0.14) !important;
+          color: #ffffff !important;
+          transition: all 0.25s ease !important;
+        }
+        .auth-input:focus {
+          border-color: rgba(234, 179, 8, 0.55) !important;
+          box-shadow: 0 0 15px rgba(234, 179, 8, 0.22) !important;
+          background: rgba(255, 255, 255, 0.07) !important;
         }
       `}</style>
 
-      {/* Photo Festival Background Grid & Particles */}
       <BackgroundMosaic />
+      <div className="fixed inset-0 bg-gradient-to-t from-[#07070a] via-[#07070a]/30 to-[#07070a]/85 z-0 pointer-events-none" />
       <GlitterParticles />
 
-      {/* Central Layout Container */}
       <div className="w-full max-w-md relative z-10 flex flex-col items-center">
-        {/* Main Branding Typography Header */}
-        <div className="text-center mb-6 w-full select-none">
-          <h2 className="chromium-gold-text text-3xl sm:text-4xl font-extrabold tracking-widest text-center">
-            AVNI IMAGE STUDIO
-          </h2>
+        <div className="text-center mb-6 w-full select-none flex flex-col items-center">
+          <h1 className="chromium-gold-text text-5xl sm:text-6xl font-extrabold tracking-[0.25em] text-center leading-none">
+            AVNI
+          </h1>
+          <span className="text-[11px] sm:text-xs font-bold tracking-[0.3em] text-[#ffe27d] mt-2 select-none uppercase">
+            IMAGE STUDIO
+          </span>
         </div>
 
-        {/* Official Logo Emblem - Interwoven Geometric Aperture & Stylized 'A' */}
         <div className="flex flex-col items-center mb-8 relative select-none">
           <div className="transition-transform duration-1000 hover:rotate-180 cursor-pointer">
-            <svg className="w-16 h-16 drop-shadow-[0_0_15px_rgba(168,85,247,0.3)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+            <svg className="w-24 h-24 drop-shadow-[0_0_25px_rgba(234,179,8,0.55)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
               <defs>
-                <linearGradient id="aperture-grad" x1="0%" y1="0%" x2="100%" y2="100%">
-                  <stop offset="0%" stopColor="#a855f7" />
-                  <stop offset="50%" stopColor="#ec4899" />
-                  <stop offset="100%" stopColor="#eab308" />
-                </linearGradient>
-                <linearGradient id="a-grad" x1="0%" y1="100%" x2="100%" y2="0%">
+                <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
                   <stop offset="0%" stopColor="#ffffff" />
-                  <stop offset="100%" stopColor="#eab308" />
+                  <stop offset="30%" stopColor="#fef08a" />
+                  <stop offset="70%" stopColor="#ca8a04" />
+                  <stop offset="100%" stopColor="#ffe27d" />
                 </linearGradient>
-                <filter id="logo-glow" x="-20%" y="-20%" width="140%" height="140%">
-                  <feGaussianBlur stdDeviation="3.5" result="blur" />
-                  <feComposite in="SourceGraphic" in2="blur" operator="over" />
-                </filter>
+                <radialGradient id="pink-glow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#f472b6" />
+                  <stop offset="50%" stopColor="#a855f7" />
+                  <stop offset="100%" stopColor="transparent" />
+                </radialGradient>
               </defs>
-              <circle cx="50" cy="50" r="45" stroke="url(#aperture-grad)" strokeWidth="1.5" strokeDasharray="6 3" />
-              <path d="M50 5 L75 35 M75 35 L95 50 M95 50 L65 75 M65 75 L50 95 M50 95 L25 65 M25 65 L5 50 M5 50 L35 25 M35 25 L50 5" stroke="url(#aperture-grad)" strokeWidth="1" strokeOpacity="0.4" />
-              <circle cx="50" cy="50" r="32" stroke="url(#aperture-grad)" strokeWidth="2" strokeOpacity="0.25" />
-              <path d="M50 24 L28 72 H38 L50 44 L62 72 H72 L50 24 Z" fill="url(#a-grad)" filter="url(#logo-glow)" />
-              <path d="M41 58 H59" stroke="url(#a-grad)" strokeWidth="4.5" strokeLinecap="round" />
-              <circle cx="50" cy="50" r="6" fill="#eab308" opacity="0.3" />
-              <circle cx="50" cy="50" r="2" fill="#ffffff" />
+              <g stroke="url(#gold-gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.95">
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(60 50 50)" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(120 50 50)" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(180 50 50)" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(240 50 50)" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(300 50 50)" />
+              </g>
+              <path d="M50 32 L36 64 H44 L50 48 L56 64 H64 L50 32 Z" fill="url(#gold-gradient)" />
+              <path d="M43 54 H57" stroke="url(#gold-gradient)" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="50" cy="48" r="8" fill="url(#pink-glow)" opacity="0.7" />
+              <circle cx="50" cy="48" r="3.5" fill="#ffffff" />
             </svg>
           </div>
           <span className="text-[9px] text-studio-gold/75 tracking-widest uppercase mt-2 font-medium">
@@ -513,43 +554,28 @@ export default function AuthPage() {
           </span>
         </div>
 
-        {/* Feature pills */}
-        {step === 'landing' && (
-          <div className="flex flex-wrap justify-center gap-2 mb-6 w-full select-none">
-            {FEATURES.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 backdrop-blur-md bg-white/5 border border-white/5 rounded-full text-[10px] text-zinc-300 font-medium">
-                <Icon className="w-3 h-3 text-primary animate-pulse" />{label}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Main card */}
         <div className="glassmorphic-auth-card rounded-3xl p-8 border border-white/10 glow-violet shadow-2xl relative overflow-hidden w-full">
-          {/* ── LANDING ── */}
           {step === 'landing' && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground text-center mb-4">Get Started</h2>
+            <div className="space-y-4">
               <GoogleBtn />
-              <div className="flex items-center gap-2 py-1">
-                <div className="flex-1 h-px bg-border/50" />
-                <span className="text-xs text-muted-foreground">or</span>
-                <div className="flex-1 h-px bg-border/50" />
+              <div className="flex items-center gap-3 py-1 justify-center select-none">
+                <div className="w-10 h-[1px] bg-white/10" />
+                <span className="text-[11px] text-zinc-500 uppercase tracking-widest font-bold">or</span>
+                <div className="w-10 h-[1px] bg-white/10" />
               </div>
-              <Button onClick={() => setStep('signup_email')} className="w-full studio-gradient text-white border-0 py-3 h-auto">
-                <Mail className="w-4 h-4 mr-2" />Create Account with Email
+              <Button onClick={() => setStep('signup_email')} className="w-full auth-btn-gold flex items-center justify-center gap-2.5 py-3 h-12 rounded-xl text-stone-950 font-bold">
+                <Mail className="w-4.5 h-4.5" />
+                <span>Create Account with Email</span>
               </Button>
-              <Button onClick={() => setStep('signin')} variant="outline" className="w-full border-border hover:border-primary/40 py-3 h-auto">
-                <Lock className="w-4 h-4 mr-2" />Sign In
-              </Button>
-              <p className="text-[10px] text-muted-foreground/60 text-center pt-2">
-                By continuing you agree to our Terms of Service.<br />
-                Your data is encrypted and never sold.
-              </p>
+              <div className="flex justify-center pt-2">
+                <Button onClick={() => setStep('signin')} variant="ghost" className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 hover:bg-transparent font-semibold">
+                  <Lock className="w-3.5 h-3.5 text-primary" />
+                  <span>Sign In</span>
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* ── FORGOT: Email ── */}
           {step === 'forgot_email' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -562,17 +588,16 @@ export default function AuthPage() {
                 <input
                   type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleForgotSendOtp()}
                 />
               </div>
-              <Button onClick={handleForgotSendOtp} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleForgotSendOtp} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Sending…' : <><Mail className="w-4 h-4 mr-2" />Send Reset Code</>}
               </Button>
             </div>
           )}
 
-          {/* ── FORGOT: OTP ── */}
           {step === 'forgot_otp' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -585,18 +610,17 @@ export default function AuthPage() {
                 <input
                   type="text" inputMode="numeric" maxLength={6} value={forgotOtp} onChange={e => setForgotOtp(e.target.value.replace(/\D/g, ''))}
                   placeholder="0000"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleForgotVerifyOtp()}
                 />
               </div>
-              <Button onClick={handleForgotVerifyOtp} disabled={forgotOtp.length < 4} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleForgotVerifyOtp} disabled={forgotOtp.length < 4} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 Verify Code <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
               <button onClick={handleForgotSendOtp} className="w-full text-xs text-muted-foreground hover:text-foreground text-center">Resend code</button>
             </div>
           )}
 
-          {/* ── FORGOT: New Password ── */}
           {step === 'forgot_password' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -609,7 +633,7 @@ export default function AuthPage() {
                   <input
                     type={showPw ? 'text' : 'password'} value={forgotPassword} onChange={e => setForgotPassword(e.target.value)}
                     placeholder="Min. 6 characters"
-                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full auth-input rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none"
                     onKeyDown={e => e.key === 'Enter' && handleForgotSetPassword()}
                   />
                   <button onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -626,13 +650,12 @@ export default function AuthPage() {
                   ))}
                 </div>
               )}
-              <Button onClick={handleForgotSetPassword} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleForgotSetPassword} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Resetting…' : <><Shield className="w-4 h-4 mr-2" />Reset Password</>}
               </Button>
             </div>
           )}
 
-          {/* ── SIGN IN ── */}
           {step === 'signin' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -650,7 +673,7 @@ export default function AuthPage() {
                 <input
                   type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleSignIn()}
                 />
               </div>
@@ -660,7 +683,7 @@ export default function AuthPage() {
                   <input
                     type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full auth-input rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none"
                     onKeyDown={e => e.key === 'Enter' && handleSignIn()}
                   />
                   <button onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -668,7 +691,7 @@ export default function AuthPage() {
                   </button>
                 </div>
               </div>
-              <Button onClick={handleSignIn} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleSignIn} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Signing in…' : <>Sign In <ArrowRight className="w-4 h-4 ml-1.5" /></>}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
@@ -680,7 +703,6 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* ── SIGN UP: Email ── */}
           {step === 'signup_email' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -698,11 +720,11 @@ export default function AuthPage() {
                 <input
                   type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                 />
               </div>
-              <Button onClick={handleSendOtp} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleSendOtp} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Sending OTP…' : <><Mail className="w-4 h-4 mr-2" />Send Verification Code</>}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
@@ -712,7 +734,6 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* ── SIGN UP: OTP ── */}
           {step === 'signup_otp' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -725,18 +746,17 @@ export default function AuthPage() {
                 <input
                   type="text" inputMode="numeric" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
                   placeholder="0000"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
                 />
               </div>
-              <Button onClick={handleVerifyOtp} disabled={otp.length < 4} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleVerifyOtp} disabled={otp.length < 4} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 Verify Code <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
               <button onClick={handleSendOtp} className="w-full text-xs text-muted-foreground hover:text-foreground text-center">Resend code</button>
             </div>
           )}
 
-          {/* ── SIGN UP: Password ── */}
           {step === 'signup_password' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -751,7 +771,7 @@ export default function AuthPage() {
                   <input
                     type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="Min. 6 characters"
-                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full auth-input rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none"
                   />
                   <button onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -763,11 +783,10 @@ export default function AuthPage() {
                 <input
                   type={showPw ? 'text' : 'password'} value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
                   placeholder="Repeat password"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleRegister()}
                 />
               </div>
-              {/* Password strength */}
               {password.length > 0 && (
                 <div className="flex gap-1">
                   {[1,2,3,4].map(n => (
@@ -777,7 +796,7 @@ export default function AuthPage() {
                   ))}
                 </div>
               )}
-              <Button onClick={handleRegister} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleRegister} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Creating Account…' : <><Shield className="w-4 h-4 mr-2" />Create Secure Account</>}
               </Button>
             </div>
