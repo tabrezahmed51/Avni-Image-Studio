@@ -1,0 +1,13 @@
+# Ignore dependencies and builds
+node_modules/
+dist/
+.env
+.git/
+.github/
+
+# Ignore local asset and backup folders
+BeautyPlus_v7.36.0/
+Media/
+*.zip
+*.tar.gz
+*.log
