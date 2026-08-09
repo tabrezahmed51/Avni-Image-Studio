@@ -4,7 +4,7 @@ import {
   Sparkles, ImageIcon, Wand2, Layers, Zap, Globe,
   ChevronDown, Download, RefreshCw, ArrowRight, Star,
   History, Share2, Upload, X, Lightbulb, Plus, Package, Settings2,
-  LogOut, ShieldCheck, Server, Cpu,
+  LogOut, ShieldCheck, Server, Cpu, Brain, User
 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAdminRole } from '@/hooks/useAdminRole';
@@ -365,6 +365,13 @@ export default function HomePage() {
   const [generating, setGenerating] = useState(false);
   const [generatedImage, setGeneratedImage] = useState<string | null>(null);
 
+  // Advanced Creative Templates State
+  const [activeCategory, setActiveCategory] = useState<'enhance' | 'transform' | 'accessory' | 'blend'>('enhance');
+  const [activeTemplate, setActiveTemplate] = useState<string | null>(null);
+  const [subjectImage, setSubjectImage] = useState<string | null>(null);
+  const [styleImage, setStyleImage] = useState<string | null>(null);
+  const [analyzingImages, setAnalyzingImages] = useState(false);
+
   // Variations
   const [variations, setVariations] = useState<VariationItem[]>([]);
   const [generatingVariations, setGeneratingVariations] = useState(false);
@@ -450,7 +457,8 @@ export default function HomePage() {
     if (!prompt.trim()) { toast.error('Please enter a prompt first'); return; }
     setGenerating(true); setGeneratedImage(null); setVariations([]);
     try {
-      const result = await generateImage(prompt.trim(), aspectRatio, style);
+      const activeBase64 = (activeCategory === 'blend' && subjectImage) ? subjectImage : null;
+      const result = await generateImage(prompt.trim(), aspectRatio, style, activeBase64);
       setGeneratedImage(result.imageUrl);
       setActiveImage(result.imageUrl); // push to Zustand store for undo/redo
       toast.success('Image created!');
@@ -458,6 +466,84 @@ export default function HomePage() {
       addItem({ imageUrl: result.imageUrl, prompt: prompt.trim(), style, aspectRatio });
     } catch (err: unknown) { toast.error(err instanceof Error ? err.message : 'Generation failed'); }
     finally { setGenerating(false); }
+  };
+
+  // ─ AI Image Analyser Agent
+  const handleAnalyzeAndBlend = async () => {
+    if (!subjectImage) { toast.error('Please upload a Subject/Character image (Image 1)'); return; }
+    if (!styleImage) { toast.error('Please upload a Style/Outfit/Scene image (Image 2)'); return; }
+    setAnalyzingImages(true);
+    try {
+      const apiKey = import.meta.env.VITE_GEMINI_API_KEY || '';
+      if (!apiKey) {
+        throw new Error('Gemini API Key is missing. Please check VITE_GEMINI_API_KEY in your environment configuration.');
+      }
+
+      const getRawBase64 = (b64: string) => {
+        const parts = b64.split(';base64,');
+        return parts.length > 1 ? parts[1] : b64;
+      };
+      const getMime = (b64: string) => {
+        const match = b64.match(/data:([^;]+);base64,/);
+        return match ? match[1] : 'image/png';
+      };
+
+      const payload = {
+        contents: [
+          {
+            parts: [
+              {
+                text: `You are the Avni AI Image Analyser Agent. You are given two images:
+Image 1: The Subject / Character (analyze their face, features, expression, gender, hair).
+Image 2: The Style, Outfit, Object, or Scene (could be luxury clothing, cyberpunk armor, sneakers, background, or setting).
+
+Generate a highly descriptive, professional prompt for an AI image generator (like Flux or SDXL) that blends the subject from Image 1 flawlessly into the scene or clothing of Image 2.
+Maintain the exact facial identity, structure, hair type, and expression of the subject.
+Describe them placed in a high-fidelity cinematic scene. Use visual quality keywords (e.g. "cinematic light, photorealistic, depth of field, 8k").
+Do not output any introductory words, explanations, or code blocks. Output ONLY the raw prompt string.`
+              },
+              {
+                inlineData: {
+                  mimeType: getMime(subjectImage),
+                  data: getRawBase64(subjectImage)
+                }
+              },
+              {
+                inlineData: {
+                  mimeType: getMime(styleImage),
+                  data: getRawBase64(styleImage)
+                }
+              }
+            ]
+          }
+        ]
+      };
+
+      const url = `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${apiKey}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload)
+      });
+
+      if (!res.ok) {
+        const errText = await res.text();
+        throw new Error(`Gemini vision failed: ${errText || res.status}`);
+      }
+
+      const resultData = await res.json();
+      const resultText = resultData.candidates?.[0]?.content?.parts?.[0]?.text;
+      if (!resultText) {
+        throw new Error('Gemini Vision Analyser returned an empty response.');
+      }
+
+      setPrompt(resultText.trim());
+      toast.success('AI Analyser Agent generated the fusion prompt!');
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : 'AI Image Analyser failed');
+    } finally {
+      setAnalyzingImages(false);
+    }
   };
 
   // ─ Variations
@@ -607,6 +693,211 @@ export default function HomePage() {
                   <textarea value={prompt} onChange={(e) => setPrompt(e.target.value)} placeholder="A majestic dragon soaring over misty mountains at golden hour…" rows={3}
                     className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-foreground placeholder:text-muted-foreground resize-none focus:outline-none focus:ring-2 focus:ring-primary/50 text-xs sm:text-sm leading-relaxed"
                     onKeyDown={(e) => { if (e.key === 'Enter' && (e.metaKey || e.ctrlKey)) handleGenerate(); }} />
+                </div>
+
+                {/* ── ADVANCED CREATIVE TEMPLATES PANEL ── */}
+                <div className="border border-border/80 bg-zinc-950/60 rounded-2xl p-4.5 glow-violet">
+                  <div className="flex items-center gap-2 mb-3.5 select-none">
+                    <div className="p-1 rounded bg-[#eab308]/15 border border-[#eab308]/20">
+                      <Sparkles className="w-4 h-4 text-[#eab308]" />
+                    </div>
+                    <div>
+                      <h3 className="text-xs font-bold text-foreground uppercase tracking-widest">
+                        Advanced Creative Templates
+                      </h3>
+                      <p className="text-[10px] text-muted-foreground">
+                        Micro-pixel identity presets & AI fusion blending
+                      </p>
+                    </div>
+                  </div>
+
+                  {/* Tabs */}
+                  <div className="grid grid-cols-4 gap-1 p-1 bg-zinc-900/60 rounded-xl mb-4 border border-white/5 select-none">
+                    <button
+                      onClick={() => { setActiveCategory('enhance'); setActiveTemplate(null); }}
+                      className={`py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all ${activeCategory === 'enhance' ? 'bg-[#eab308] text-zinc-950 font-extrabold' : 'text-zinc-400 hover:text-white'}`}
+                    >
+                      Enhance
+                    </button>
+                    <button
+                      onClick={() => { setActiveCategory('transform'); setActiveTemplate(null); }}
+                      className={`py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all ${activeCategory === 'transform' ? 'bg-[#eab308] text-zinc-950 font-extrabold' : 'text-zinc-400 hover:text-white'}`}
+                    >
+                      Swap
+                    </button>
+                    <button
+                      onClick={() => { setActiveCategory('accessory'); setActiveTemplate(null); }}
+                      className={`py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all ${activeCategory === 'accessory' ? 'bg-[#eab308] text-zinc-950 font-extrabold' : 'text-zinc-400 hover:text-white'}`}
+                    >
+                      Accessory
+                    </button>
+                    <button
+                      onClick={() => { setActiveCategory('blend'); setActiveTemplate(null); }}
+                      className={`py-1.5 rounded-lg text-[10px] font-bold tracking-wider uppercase transition-all ${activeCategory === 'blend' ? 'bg-[#eab308] text-zinc-950 font-extrabold' : 'text-zinc-400 hover:text-white'}`}
+                    >
+                      Blend 🧪
+                    </button>
+                  </div>
+
+                  {/* Template grid selection */}
+                  {activeCategory !== 'blend' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-[160px] overflow-y-auto pr-1">
+                      {activeCategory === 'enhance' && [
+                        { id: 'upscale', label: '8K Ultra Super-Res', desc: 'Upscale & inject micro-detail textures', prompt: 'hyperrealistic 8K UHD textures, extreme micro-detail synthesis, ultimate high resolution clarity, professional cinematic lighting' },
+                        { id: 'denoise', label: 'Pro Noise Reduction', desc: 'Clear artifacts & smooth ambient lights', prompt: 'clean digital studio lighting, smooth ambient occlusion, ultra high sharpness, zero noise artifacts, flawless lighting gradient' }
+                      ].map(t => (
+                        <button
+                          key={t.id}
+                          onClick={() => { setActiveTemplate(t.id); setPrompt(t.prompt); }}
+                          className={`p-2.5 rounded-xl text-left transition-all border ${activeTemplate === t.id ? 'border-[#eab308] bg-[#eab308]/5' : 'border-white/5 bg-[#121216] hover:bg-zinc-900'}`}
+                        >
+                          <p className="text-[11px] font-bold text-zinc-200">{t.label}</p>
+                          <p className="text-[9px] text-zinc-500 leading-normal mt-0.5">{t.desc}</p>
+                        </button>
+                      ))}
+
+                      {activeCategory === 'transform' && [
+                        { id: 'face_swap', label: 'Identity Face Swap', desc: 'Preserves facial geometry & features', prompt: 'hyperrealistic portrait, professional studio headshot photo, perfect symmetrical facial features, volumetric studio lighting, rich depth of field' },
+                        { id: 'dress_swap', label: 'High-Fashion Dress Swap', desc: 'Blend luxury couture wardrobe outfits', prompt: 'wearing an elegant custom tailored luxury couture garment, haute couture fashion shoot, modern studio backdrop, professional lighting' },
+                        { id: 'superhero', label: 'Cinematic Superhero Suit', desc: 'Wrap subject in detailed high-tech armor', prompt: 'wearing a majestic high-tech carbon-fiber metallic superhero armor suit, glowing neon accents, cinematic studio style, epic lighting' }
+                      ].map(t => (
+                        <button
+                          key={t.id}
+                          onClick={() => { setActiveTemplate(t.id); setPrompt(t.prompt); }}
+                          className={`p-2.5 rounded-xl text-left transition-all border ${activeTemplate === t.id ? 'border-[#eab308] bg-[#eab308]/5' : 'border-white/5 bg-[#121216] hover:bg-zinc-900'}`}
+                        >
+                          <p className="text-[11px] font-bold text-zinc-200">{t.label}</p>
+                          <p className="text-[9px] text-zinc-500 leading-normal mt-0.5">{t.desc}</p>
+                        </button>
+                      ))}
+
+                      {activeCategory === 'accessory' && [
+                        { id: 'sunglasses', label: 'Luxury Dark Sunglasses', desc: 'Aviator style reflective lenses', prompt: 'wearing premium luxury dark aviator sunglasses with gold frames, cinematic reflections' },
+                        { id: 'glasses', label: 'Designer Specks / Glasses', desc: 'Modern black-rimmed reading glasses', prompt: 'wearing stylish modern black-rimmed designer reading glasses, realistic lens reflections' },
+                        { id: 'footwear', label: 'Futuristic Sneakers', desc: 'Cyberpunk high-top sneakers on feet', prompt: 'wearing futuristic high-top smart sneakers with neon self-lacing systems, street style photography' }
+                      ].map(t => (
+                        <button
+                          key={t.id}
+                          onClick={() => { setActiveTemplate(t.id); setPrompt(t.prompt); }}
+                          className={`p-2.5 rounded-xl text-left transition-all border ${activeTemplate === t.id ? 'border-[#eab308] bg-[#eab308]/5' : 'border-white/5 bg-[#121216] hover:bg-zinc-900'}`}
+                        >
+                          <p className="text-[11px] font-bold text-zinc-200">{t.label}</p>
+                          <p className="text-[9px] text-zinc-500 leading-normal mt-0.5">{t.desc}</p>
+                        </button>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Dual-image Custom Blend Section */}
+                  {activeCategory === 'blend' && (
+                    <div className="space-y-3.5">
+                      <p className="text-[10px] text-zinc-400 leading-normal select-none">
+                        Upload the <strong>Subject (Image 1)</strong> and the <strong>Scene/Style (Image 2)</strong>. The AI Image Analyser Agent will scan both to fuse them perfectly.
+                      </p>
+
+                      <div className="grid grid-cols-2 gap-2.5">
+                        {/* Box 1 (Subject) */}
+                        <div className="relative">
+                          <label className="text-[9px] text-zinc-500 block mb-1 uppercase font-bold tracking-wider">Image 1: Subject</label>
+                          <div
+                            onClick={() => document.getElementById('subject-upload-input')?.click()}
+                            className="h-28 rounded-xl border border-dashed border-white/10 bg-[#121216] hover:bg-zinc-900 cursor-pointer flex flex-col items-center justify-center relative overflow-hidden transition-all"
+                          >
+                            {subjectImage ? (
+                              <>
+                                <img src={subjectImage} alt="Subject Preview" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setSubjectImage(null); }}
+                                  className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/75 hover:bg-red-950 text-white flex items-center justify-center text-[10px] border border-white/10"
+                                >
+                                  ×
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <User className="w-5 h-5 text-zinc-500 mb-1.5" />
+                                <span className="text-[9px] text-zinc-400 font-medium text-center px-2">Click to Upload Subject</span>
+                              </>
+                            )}
+                          </div>
+                          <input
+                            id="subject-upload-input"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const b64 = await convertImageToBase64(file);
+                                setSubjectImage(b64);
+                              }
+                            }}
+                          />
+                        </div>
+
+                        {/* Box 2 (Style/Object) */}
+                        <div className="relative">
+                          <label className="text-[9px] text-zinc-500 block mb-1 uppercase font-bold tracking-wider">Image 2: Outfit / Scene</label>
+                          <div
+                            onClick={() => document.getElementById('style-upload-input')?.click()}
+                            className="h-28 rounded-xl border border-dashed border-white/10 bg-[#121216] hover:bg-zinc-900 cursor-pointer flex flex-col items-center justify-center relative overflow-hidden transition-all"
+                          >
+                            {styleImage ? (
+                              <>
+                                <img src={styleImage} alt="Style Preview" className="w-full h-full object-cover" />
+                                <button
+                                  type="button"
+                                  onClick={(e) => { e.stopPropagation(); setStyleImage(null); }}
+                                  className="absolute top-1.5 right-1.5 w-5 h-5 rounded-full bg-black/75 hover:bg-red-950 text-white flex items-center justify-center text-[10px] border border-white/10"
+                                >
+                                  ×
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <ImageIcon className="w-5 h-5 text-zinc-500 mb-1.5" />
+                                <span className="text-[9px] text-zinc-400 font-medium text-center px-2">Click to Upload Outfit/Scene</span>
+                              </>
+                            )}
+                          </div>
+                          <input
+                            id="style-upload-input"
+                            type="file"
+                            accept="image/*"
+                            className="hidden"
+                            onChange={async (e) => {
+                              const file = e.target.files?.[0];
+                              if (file) {
+                                const b64 = await convertImageToBase64(file);
+                                setStyleImage(b64);
+                              }
+                            }}
+                          />
+                        </div>
+                      </div>
+
+                      {/* AI Analyser Trigger Button */}
+                      <Button
+                        type="button"
+                        onClick={handleAnalyzeAndBlend}
+                        disabled={analyzingImages || !subjectImage || !styleImage}
+                        className="w-full auth-btn-gold h-10 rounded-xl text-stone-950 font-bold text-xs"
+                      >
+                        {analyzingImages ? (
+                          <div className="flex items-center gap-1.5 justify-center">
+                            <RefreshCw className="w-3.5 h-3.5 animate-spin" />
+                            <span>AI Agent Analysing Pixels…</span>
+                          </div>
+                        ) : (
+                          <div className="flex items-center gap-1.5 justify-center">
+                            <Brain className="w-3.5 h-3.5" />
+                            <span>AI Agent: Analyze & Generate Blend Prompt</span>
+                          </div>
+                        )}
+                      </Button>
+                    </div>
+                  )}
                 </div>
                 <div><label className="text-xs font-medium text-muted-foreground mb-2 block">Quick Tags</label><PromptTagBuilder prompt={prompt} onAppend={handleTagAppend} /></div>
                 <div>
