@@ -4,4 +4,4 @@ Disallow: /admin/
 Disallow: /auth/callback
 Allow: /
 
-Sitemap: https://avni-image-studio.onspace.app/sitemap.xml
+Sitemap: https://avni-image-studio.vercel.app/sitemap.xml
