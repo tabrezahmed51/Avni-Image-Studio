@@ -4,13 +4,20 @@
 
 // ── XSS sanitizer (client-side) ───────────────────────────────────────
 export function sanitizeInput(input: string): string {
-  return input
-    .replace(/[<>]/g, '')                          // Strip < >
-    .replace(/javascript:/gi, '')                  // Block javascript: protocol
-    .replace(/on\w+\s*=/gi, '')                    // Block onX= handlers
-    .replace(/data:(?!image\/)/gi, '')             // Block non-image data URIs
+  let sanitized = input;
+  let previous: string;
+  do {
+    previous = sanitized;
+    sanitized = sanitized
+      .replace(/[<>]/g, '')                          // Strip < >
+      .replace(/javascript:/gi, '')                  // Block javascript: protocol
+      .replace(/on\w+\s*=/gi, '')                    // Block onX= handlers
+      .replace(/data:(?!image\/)/gi, '');            // Block non-image data URIs
+  } while (sanitized !== previous);
+
+  return sanitized
     .trim()
-    .slice(0, 2000);                               // Hard limit
+    .slice(0, 2000);                                 // Hard limit
 }
 
 // ── Rate limiter (in-memory, per key) ────────────────────────────────
