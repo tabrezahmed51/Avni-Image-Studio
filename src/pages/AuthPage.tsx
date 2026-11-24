@@ -5,6 +5,7 @@ import { Eye, EyeOff, Sparkles, Mail, Lock, User, ArrowRight, Shield, Brain, Zap
 import { Button } from '@/components/ui/button';
 import { supabase } from '@/lib/supabaseClient';
 import { useAuth } from '@/contexts/AuthContext';
+import { motion } from 'framer-motion';
 
 // ── OAuth popup helpers ───────────────────────────────────────────────
 function isInIframe(): boolean {
@@ -92,6 +93,188 @@ const FEATURES = [
   { icon: Zap, label: 'Lightning Fast' },
   { icon: Globe, label: '7 AI Providers' },
 ];
+
+// ── Background Mosaic & Particle Canvas ───────────────────────────────
+function BackgroundMosaic() {
+  const IMAGES = [
+    "https://images.unsplash.com/photo-1618005182384-a83a8bd57fbe?w=400&q=80",
+    "https://images.unsplash.com/photo-1607604276583-eef5d076aa5f?w=400&q=80",
+    "https://images.unsplash.com/photo-1541701494587-cb58502866ab?w=400&q=80",
+    "https://images.unsplash.com/photo-1579783902614-a3fb3927b6a5?w=400&q=80",
+    "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?w=400&q=80",
+    "https://images.unsplash.com/photo-1509198397868-475647b2a1e5?w=400&q=80",
+    "https://images.unsplash.com/photo-1549490349-8643362247b5?w=400&q=80",
+    "https://images.unsplash.com/photo-1618336753974-aae8e04506aa?w=400&q=80",
+    "https://images.unsplash.com/photo-1534447677768-be436bb09401?w=400&q=80",
+    "https://images.unsplash.com/photo-1550684848-fac1c5b4e853?w=400&q=80",
+    "https://images.unsplash.com/photo-1542831371-29b0f74f9713?w=400&q=80",
+    "https://images.unsplash.com/photo-1563089145-599997674d42?w=400&q=80",
+    "https://images.unsplash.com/photo-1579783928621-7a13d66a62d1?w=400&q=80",
+    "https://images.unsplash.com/photo-1536924940846-227afb31e2a5?w=400&q=80",
+    "https://images.unsplash.com/photo-1502134249126-9f3755a50d78?w=400&q=80",
+    "https://images.unsplash.com/photo-1558591710-4b4a1ae0f04d?w=400&q=80",
+    "https://images.unsplash.com/photo-1634017839464-5c339ebe3cb4?w=400&q=80",
+    "https://images.unsplash.com/photo-1518770660439-4636190af475?w=400&q=80",
+    "https://images.unsplash.com/photo-1507525428034-b723cf961d3e?w=400&q=80",
+    "https://images.unsplash.com/photo-1478760329108-5c3ed9d495a0?w=400&q=80",
+    "https://images.unsplash.com/photo-1554050857-c84a8abdb5e2?w=400&q=80",
+    "https://images.unsplash.com/photo-1578632767115-351597cf2477?w=400&q=80",
+    "https://images.unsplash.com/photo-1620641788421-7a1c342ea42e?w=400&q=80",
+    "https://images.unsplash.com/photo-1608889175123-8ec330b86f84?w=400&q=80",
+    "https://images.unsplash.com/photo-1528459801416-a9e53bbf4e17?w=400&q=80",
+    "https://images.unsplash.com/photo-1531346878377-a5be20888e57?w=400&q=80",
+    "https://images.unsplash.com/photo-1614850523459-c2f4c699c52e?w=400&q=80",
+    "https://images.unsplash.com/photo-1500485035595-cbeee2d65b2e?w=400&q=80",
+    "https://images.unsplash.com/photo-1638913662252-70efd1a69363?w=400&q=80",
+    "https://images.unsplash.com/photo-1561715276-a2d087060f1d?w=400&q=80",
+  ];
+
+  const gridItems = Array.from({ length: 40 }, (_, i) => {
+    const image = IMAGES[i % IMAGES.length];
+    const duration = 12 + (i % 5) * 3;
+    const delay = (i % 7) * 2;
+    return { id: i, image, duration, delay };
+  });
+
+  return (
+    <div className="fixed inset-0 z-0 grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-8 gap-3 p-3 opacity-[0.24] select-none pointer-events-none overflow-hidden bg-black">
+      {gridItems.map((item) => (
+        <motion.div
+          key={item.id}
+          className="w-full h-full aspect-square rounded-xl overflow-hidden bg-zinc-955 border border-white/5"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          transition={{ duration: 1.2, delay: item.delay * 0.15 }}
+        >
+          <motion.img
+            src={item.image}
+            alt="Festival Backdrop"
+            className="w-full h-full object-cover filter brightness-[0.7] saturate-[0.8] contrast-[1.1]"
+            animate={{
+              scale: [1, 1.12, 1],
+              opacity: [0.75, 0.45, 0.75],
+            }}
+            transition={{
+              duration: item.duration,
+              repeat: Infinity,
+              ease: "easeInOut",
+              delay: item.delay,
+            }}
+          />
+        </motion.div>
+      ))}
+    </div>
+  );
+}
+
+function GlitterParticles() {
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext('2d');
+    if (!ctx) return;
+
+    let animationFrameId: number;
+    let width = (canvas.width = window.innerWidth);
+    let height = (canvas.height = window.innerHeight);
+
+    const handleResize = () => {
+      width = canvas.width = window.innerWidth;
+      height = canvas.height = window.innerHeight;
+    };
+
+    window.addEventListener('resize', handleResize);
+
+    const colors = [
+      'rgba(234, 179, 8, ',   // Gold
+      'rgba(253, 224, 71, ',  // Light Gold
+      'rgba(226, 232, 240, ', // Silver
+      'rgba(168, 85, 247, ',  // Purple
+      'rgba(236, 72, 153, ',  // Pink
+      'rgba(56, 189, 248, ',  // Sky Blue
+    ];
+
+    interface Particle {
+      x: number;
+      y: number;
+      size: number;
+      speedY: number;
+      speedX: number;
+      opacity: number;
+      opacitySpeed: number;
+      colorPrefix: string;
+      angle: number;
+      spin: number;
+    }
+
+    const particleCount = 70;
+    const particles: Particle[] = [];
+
+    const createParticle = (randomY = false): Particle => ({
+      x: Math.random() * width,
+      y: randomY ? Math.random() * height : -10,
+      size: Math.random() * 2 + 1,
+      speedY: Math.random() * 0.6 + 0.2,
+      speedX: Math.random() * 0.3 - 0.15,
+      opacity: Math.random() * 0.4 + 0.2,
+      opacitySpeed: Math.random() * 0.01 + 0.005,
+      colorPrefix: colors[Math.floor(Math.random() * colors.length)],
+      angle: Math.random() * Math.PI * 2,
+      spin: Math.random() * 0.02 - 0.01,
+    });
+
+    for (let i = 0; i < particleCount; i++) {
+      particles.push(createParticle(true));
+    }
+
+    function animate() {
+      ctx.clearRect(0, 0, width, height);
+
+      for (let i = 0; i < particles.length; i++) {
+        const p = particles[i];
+        p.y += p.speedY;
+        p.x += p.speedX;
+        p.angle += p.spin;
+
+        const currentOpacity = p.opacity + Math.sin(p.angle) * 0.15;
+        const clampedOpacity = Math.max(0.1, Math.min(currentOpacity, 0.7));
+
+        ctx.save();
+        ctx.translate(p.x, p.y);
+        ctx.rotate(p.angle);
+        
+        ctx.beginPath();
+        ctx.moveTo(0, -p.size);
+        ctx.lineTo(p.size / 1.5, 0);
+        ctx.lineTo(0, p.size);
+        ctx.lineTo(-p.size / 1.5, 0);
+        ctx.closePath();
+
+        ctx.fillStyle = `${p.colorPrefix}${clampedOpacity})`;
+        ctx.fill();
+
+        ctx.restore();
+
+        if (p.y > height + 10 || p.x < -10 || p.x > width + 10) {
+          particles[i] = createParticle(false);
+        }
+      }
+
+      animationFrameId = requestAnimationFrame(animate);
+    }
+
+    animate();
+
+    return () => {
+      window.removeEventListener('resize', handleResize);
+      cancelAnimationFrame(animationFrameId);
+    };
+  }, []);
+
+  return <canvas ref={canvasRef} className="fixed inset-0 z-0 pointer-events-none select-none" />;
+}
 
 type AuthStep = 'landing' | 'signin' | 'signup_email' | 'signup_otp' | 'signup_password' | 'forgot_email' | 'forgot_otp' | 'forgot_password';
 
@@ -237,7 +420,7 @@ export default function AuthPage() {
       onClick={handleGoogleSignIn}
       disabled={loading}
       variant="outline"
-      className="w-full border-border hover:border-primary/40 bg-secondary/30 hover:bg-secondary/60 flex items-center gap-3 py-3 h-auto"
+      className="w-full auth-btn-outline flex items-center justify-center gap-3 py-3 h-12 rounded-xl"
     >
       <svg className="w-5 h-5" viewBox="0 0 24 24">
         <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -245,64 +428,154 @@ export default function AuthPage() {
         <path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
         <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
       </svg>
-      <span className="text-sm font-medium">Continue with Google</span>
+      <span className="text-sm font-semibold text-white">Continue with Google</span>
     </Button>
   );
 
-  // ── Render ─────────────────────────────────────────────────────────
   return (
-    <div className="min-h-screen bg-background mesh-bg flex flex-col items-center justify-center px-4 py-12">
-      {/* Background glows */}
-      <div className="fixed top-0 left-1/4 w-96 h-96 rounded-full bg-primary/10 blur-3xl pointer-events-none" />
-      <div className="fixed bottom-0 right-1/4 w-80 h-80 rounded-full bg-studio-rose/8 blur-3xl pointer-events-none" />
+    <div className="min-h-screen bg-[#07070a] flex flex-col items-center justify-center px-4 py-12 relative overflow-hidden select-none">
+      <style>{`
+        .chromium-gold-text {
+          font-family: 'Montserrat', 'Inter', sans-serif;
+          font-weight: 900;
+          text-transform: uppercase;
+          background: linear-gradient(
+            to bottom,
+            #ffffff 0%,
+            #ffe27d 22%,
+            #ca8a04 45%,
+            #eab308 60%,
+            #ca8a04 75%,
+            #ffffff 88%,
+            #854d0e 100%
+          );
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          filter: drop-shadow(0 0 20px rgba(168, 85, 247, 0.65))
+                  drop-shadow(0 4px 25px rgba(234, 179, 8, 0.5));
+        }
+        .glassmorphic-auth-card {
+          backdrop-filter: blur(30px);
+          background: rgba(10, 10, 15, 0.78);
+          border: 1.5px solid rgba(234, 179, 8, 0.25);
+          box-shadow: 
+            0 24px 75px rgba(0, 0, 0, 0.8),
+            inset 0 0 0 1px rgba(255, 255, 255, 0.05),
+            0 0 50px rgba(168, 85, 247, 0.18),
+            0 0 20px rgba(234, 179, 8, 0.1);
+        }
+        .auth-btn-gold {
+          background: linear-gradient(135deg, #ffe27d 0%, #eab308 100%);
+          color: #0c0a09;
+          font-weight: 800;
+          border: 1px solid rgba(254, 240, 138, 0.35);
+          box-shadow: 0 4px 14px rgba(234, 179, 8, 0.25);
+          transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .auth-btn-gold:hover {
+          background: linear-gradient(135deg, #ffffff 0%, #ffe27d 100%);
+          box-shadow: 0 6px 20px rgba(234, 179, 8, 0.5);
+          transform: translateY(-1px) scale(1.01);
+        }
+        .auth-btn-gold:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+        .auth-btn-outline {
+          background: rgba(255, 255, 255, 0.03);
+          border: 1px solid rgba(255, 255, 255, 0.12);
+          color: #f1f5f9;
+          transition: all 0.25s ease;
+        }
+        .auth-btn-outline:hover {
+          background: rgba(255, 255, 255, 0.08);
+          border-color: rgba(234, 179, 8, 0.45);
+          color: #ffffff;
+        }
+        .auth-input {
+          background: rgba(255, 255, 255, 0.04) !important;
+          border: 1px solid rgba(255, 255, 255, 0.14) !important;
+          color: #ffffff !important;
+          transition: all 0.25s ease !important;
+        }
+        .auth-input:focus {
+          border-color: rgba(234, 179, 8, 0.55) !important;
+          box-shadow: 0 0 15px rgba(234, 179, 8, 0.22) !important;
+          background: rgba(255, 255, 255, 0.07) !important;
+        }
+      `}</style>
 
-      <div className="w-full max-w-md relative z-10">
-        {/* Logo */}
-        <div className="flex flex-col items-center mb-8">
-          <div className="w-14 h-14 studio-gradient rounded-2xl flex items-center justify-center mb-3 glow-violet">
-            <Sparkles className="w-7 h-7 text-white" />
-          </div>
-          <h1 className="font-display text-2xl font-black text-foreground">Avni Image Studio</h1>
-          <p className="text-studio-gold text-sm italic mt-1">"Imagination is next reality"</p>
+      <BackgroundMosaic />
+      <div className="fixed inset-0 bg-gradient-to-t from-[#07070a] via-[#07070a]/30 to-[#07070a]/85 z-0 pointer-events-none" />
+      <GlitterParticles />
+
+      <div className="w-full max-w-md relative z-10 flex flex-col items-center">
+        <div className="text-center mb-6 w-full select-none flex flex-col items-center">
+          <h1 className="chromium-gold-text text-5xl sm:text-6xl font-extrabold tracking-[0.25em] text-center leading-none">
+            AVNI
+          </h1>
+          <span className="text-[11px] sm:text-xs font-bold tracking-[0.3em] text-[#ffe27d] mt-2 select-none uppercase">
+            IMAGE STUDIO
+          </span>
         </div>
 
-        {/* Feature pills */}
-        {step === 'landing' && (
-          <div className="flex flex-wrap justify-center gap-2 mb-6">
-            {FEATURES.map(({ icon: Icon, label }) => (
-              <div key={label} className="flex items-center gap-1.5 px-3 py-1.5 glass-card rounded-full text-xs text-muted-foreground">
-                <Icon className="w-3 h-3 text-primary" />{label}
-              </div>
-            ))}
+        <div className="flex flex-col items-center mb-8 relative select-none">
+          <div className="transition-transform duration-1000 hover:rotate-180 cursor-pointer">
+            <svg className="w-24 h-24 drop-shadow-[0_0_25px_rgba(234,179,8,0.55)]" viewBox="0 0 100 100" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <defs>
+                <linearGradient id="gold-gradient" x1="0%" y1="0%" x2="100%" y2="100%">
+                  <stop offset="0%" stopColor="#ffffff" />
+                  <stop offset="30%" stopColor="#fef08a" />
+                  <stop offset="70%" stopColor="#ca8a04" />
+                  <stop offset="100%" stopColor="#ffe27d" />
+                </linearGradient>
+                <radialGradient id="pink-glow" cx="50%" cy="50%" r="50%">
+                  <stop offset="0%" stopColor="#f472b6" />
+                  <stop offset="50%" stopColor="#a855f7" />
+                  <stop offset="100%" stopColor="transparent" />
+                </radialGradient>
+              </defs>
+              <g stroke="url(#gold-gradient)" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round" opacity="0.95">
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(60 50 50)" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(120 50 50)" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(180 50 50)" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(240 50 50)" />
+                <path d="M50 15 C58 15, 68 22, 72 32 C74 38, 70 46, 62 48 C54 50, 46 44, 44 36 C42 28, 48 20, 56 18 C64 16, 72 22, 74 30" transform="rotate(300 50 50)" />
+              </g>
+              <path d="M50 32 L36 64 H44 L50 48 L56 64 H64 L50 32 Z" fill="url(#gold-gradient)" />
+              <path d="M43 54 H57" stroke="url(#gold-gradient)" strokeWidth="2.5" strokeLinecap="round" />
+              <circle cx="50" cy="48" r="8" fill="url(#pink-glow)" opacity="0.7" />
+              <circle cx="50" cy="48" r="3.5" fill="#ffffff" />
+            </svg>
           </div>
-        )}
+          <span className="text-[9px] text-studio-gold/75 tracking-widest uppercase mt-2 font-medium">
+            "Imagination is next reality"
+          </span>
+        </div>
 
-        {/* Main card */}
-        <div className="glass-card rounded-2xl p-6 border border-border/40 glow-violet">
-          {/* ── LANDING ── */}
+        <div className="glassmorphic-auth-card rounded-3xl p-8 border border-white/10 glow-violet shadow-2xl relative overflow-hidden w-full">
           {step === 'landing' && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-bold text-foreground text-center mb-4">Get Started</h2>
+            <div className="space-y-4">
               <GoogleBtn />
-              <div className="flex items-center gap-2 py-1">
-                <div className="flex-1 h-px bg-border/50" />
-                <span className="text-xs text-muted-foreground">or</span>
-                <div className="flex-1 h-px bg-border/50" />
+              <div className="flex items-center gap-3 py-1 justify-center select-none">
+                <div className="w-10 h-[1px] bg-white/10" />
+                <span className="text-[11px] text-zinc-500 uppercase tracking-widest font-bold">or</span>
+                <div className="w-10 h-[1px] bg-white/10" />
               </div>
-              <Button onClick={() => setStep('signup_email')} className="w-full studio-gradient text-white border-0 py-3 h-auto">
-                <Mail className="w-4 h-4 mr-2" />Create Account with Email
+              <Button onClick={() => setStep('signup_email')} className="w-full auth-btn-gold flex items-center justify-center gap-2.5 py-3 h-12 rounded-xl text-stone-950 font-bold">
+                <Mail className="w-4.5 h-4.5" />
+                <span>Create Account with Email</span>
               </Button>
-              <Button onClick={() => setStep('signin')} variant="outline" className="w-full border-border hover:border-primary/40 py-3 h-auto">
-                <Lock className="w-4 h-4 mr-2" />Sign In
-              </Button>
-              <p className="text-[10px] text-muted-foreground/60 text-center pt-2">
-                By continuing you agree to our Terms of Service.<br />
-                Your data is encrypted and never sold.
-              </p>
+              <div className="flex justify-center pt-2">
+                <Button onClick={() => setStep('signin')} variant="ghost" className="text-xs text-zinc-400 hover:text-white flex items-center gap-1.5 hover:bg-transparent font-semibold">
+                  <Lock className="w-3.5 h-3.5 text-primary" />
+                  <span>Sign In</span>
+                </Button>
+              </div>
             </div>
           )}
 
-          {/* ── FORGOT: Email ── */}
           {step === 'forgot_email' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -315,17 +588,16 @@ export default function AuthPage() {
                 <input
                   type="email" value={forgotEmail} onChange={e => setForgotEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleForgotSendOtp()}
                 />
               </div>
-              <Button onClick={handleForgotSendOtp} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleForgotSendOtp} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Sending…' : <><Mail className="w-4 h-4 mr-2" />Send Reset Code</>}
               </Button>
             </div>
           )}
 
-          {/* ── FORGOT: OTP ── */}
           {step === 'forgot_otp' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -338,18 +610,17 @@ export default function AuthPage() {
                 <input
                   type="text" inputMode="numeric" maxLength={6} value={forgotOtp} onChange={e => setForgotOtp(e.target.value.replace(/\D/g, ''))}
                   placeholder="0000"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleForgotVerifyOtp()}
                 />
               </div>
-              <Button onClick={handleForgotVerifyOtp} disabled={forgotOtp.length < 4} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleForgotVerifyOtp} disabled={forgotOtp.length < 4} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 Verify Code <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
               <button onClick={handleForgotSendOtp} className="w-full text-xs text-muted-foreground hover:text-foreground text-center">Resend code</button>
             </div>
           )}
 
-          {/* ── FORGOT: New Password ── */}
           {step === 'forgot_password' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -362,7 +633,7 @@ export default function AuthPage() {
                   <input
                     type={showPw ? 'text' : 'password'} value={forgotPassword} onChange={e => setForgotPassword(e.target.value)}
                     placeholder="Min. 6 characters"
-                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full auth-input rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none"
                     onKeyDown={e => e.key === 'Enter' && handleForgotSetPassword()}
                   />
                   <button onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
@@ -379,13 +650,12 @@ export default function AuthPage() {
                   ))}
                 </div>
               )}
-              <Button onClick={handleForgotSetPassword} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleForgotSetPassword} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Resetting…' : <><Shield className="w-4 h-4 mr-2" />Reset Password</>}
               </Button>
             </div>
           )}
 
-          {/* ── SIGN IN ── */}
           {step === 'signin' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -403,7 +673,7 @@ export default function AuthPage() {
                 <input
                   type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleSignIn()}
                 />
               </div>
@@ -413,7 +683,7 @@ export default function AuthPage() {
                   <input
                     type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="••••••••"
-                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full auth-input rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none"
                     onKeyDown={e => e.key === 'Enter' && handleSignIn()}
                   />
                   <button onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground">
@@ -421,7 +691,7 @@ export default function AuthPage() {
                   </button>
                 </div>
               </div>
-              <Button onClick={handleSignIn} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleSignIn} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Signing in…' : <>Sign In <ArrowRight className="w-4 h-4 ml-1.5" /></>}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
@@ -433,7 +703,6 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* ── SIGN UP: Email ── */}
           {step === 'signup_email' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -451,11 +720,11 @@ export default function AuthPage() {
                 <input
                   type="email" value={email} onChange={e => setEmail(e.target.value)}
                   placeholder="you@example.com"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleSendOtp()}
                 />
               </div>
-              <Button onClick={handleSendOtp} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleSendOtp} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Sending OTP…' : <><Mail className="w-4 h-4 mr-2" />Send Verification Code</>}
               </Button>
               <p className="text-center text-xs text-muted-foreground">
@@ -465,7 +734,6 @@ export default function AuthPage() {
             </div>
           )}
 
-          {/* ── SIGN UP: OTP ── */}
           {step === 'signup_otp' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -478,18 +746,17 @@ export default function AuthPage() {
                 <input
                   type="text" inputMode="numeric" maxLength={6} value={otp} onChange={e => setOtp(e.target.value.replace(/\D/g, ''))}
                   placeholder="0000"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm text-center tracking-[0.5em] font-mono focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleVerifyOtp()}
                 />
               </div>
-              <Button onClick={handleVerifyOtp} disabled={otp.length < 4} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleVerifyOtp} disabled={otp.length < 4} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 Verify Code <ArrowRight className="w-4 h-4 ml-1.5" />
               </Button>
               <button onClick={handleSendOtp} className="w-full text-xs text-muted-foreground hover:text-foreground text-center">Resend code</button>
             </div>
           )}
 
-          {/* ── SIGN UP: Password ── */}
           {step === 'signup_password' && (
             <div className="space-y-4">
               <div className="flex items-center justify-between mb-2">
@@ -504,7 +771,7 @@ export default function AuthPage() {
                   <input
                     type={showPw ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
                     placeholder="Min. 6 characters"
-                    className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                    className="w-full auth-input rounded-xl px-3 py-2.5 pr-10 text-sm focus:outline-none"
                   />
                   <button onClick={() => setShowPw(p => !p)} className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
                     {showPw ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
@@ -516,11 +783,10 @@ export default function AuthPage() {
                 <input
                   type={showPw ? 'text' : 'password'} value={confirmPw} onChange={e => setConfirmPw(e.target.value)}
                   placeholder="Repeat password"
-                  className="w-full bg-secondary/50 border border-border rounded-xl px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-primary/50"
+                  className="w-full auth-input rounded-xl px-3 py-2.5 text-sm focus:outline-none"
                   onKeyDown={e => e.key === 'Enter' && handleRegister()}
                 />
               </div>
-              {/* Password strength */}
               {password.length > 0 && (
                 <div className="flex gap-1">
                   {[1,2,3,4].map(n => (
@@ -530,7 +796,7 @@ export default function AuthPage() {
                   ))}
                 </div>
               )}
-              <Button onClick={handleRegister} disabled={loading} className="w-full studio-gradient text-white border-0 py-3 h-auto">
+              <Button onClick={handleRegister} disabled={loading} className="w-full auth-btn-gold py-3 h-11 rounded-xl">
                 {loading ? 'Creating Account…' : <><Shield className="w-4 h-4 mr-2" />Create Secure Account</>}
               </Button>
             </div>

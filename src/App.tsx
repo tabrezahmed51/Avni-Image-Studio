@@ -11,6 +11,7 @@ import NotFound from '@/pages/NotFound';
 import GalleryPage from '@/pages/GalleryPage';
 import { AnimatePresence } from 'framer-motion';
 import StartupOverlay from '@/components/features/StartupOverlay';
+import { Analytics } from '@vercel/analytics/react';
 
 // Robots / crawler meta tag is in index.html
 // Additional security: block iframe embedding via CSP in index.html
@@ -59,6 +60,7 @@ export default function App() {
           <Route path="*" element={<NotFound />} />
         </Routes>
       </Router>
+      <Analytics />
     </AuthProvider>
   );
 }
