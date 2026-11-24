@@ -11,7 +11,7 @@ export function sanitizeInput(input: string): string {
     sanitized = sanitized
       .replace(/[<>]/g, '')                          // Strip < >
       .replace(/javascript:/gi, '')                  // Block javascript: protocol
-      .replace(/on\w+\s*=/gi, '')                    // Block onX= handlers
+      .replace(/=/g, '')                             // Remove attribute assignment operator
       .replace(/data:(?!image\/)/gi, '');            // Block non-image data URIs
   } while (sanitized !== previous);
 
