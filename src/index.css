@@ -1,45 +1,41 @@
 @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;700;900&family=Inter:wght@300;400;500;600;700&display=swap');
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
 
-@layer base {
-  :root {
-    --background: 240 15% 4%;
-    --foreground: 280 20% 96%;
+@theme {
+  --color-background: hsl(240 15% 4%);
+  --color-foreground: hsl(280 20% 96%);
 
-    --card: 240 12% 8%;
-    --card-foreground: 280 20% 96%;
+  --color-card: hsl(240 12% 8%);
+  --color-card-foreground: hsl(280 20% 96%);
 
-    --popover: 240 12% 8%;
-    --popover-foreground: 280 20% 96%;
+  --color-popover: hsl(240 12% 8%);
+  --color-popover-foreground: hsl(280 20% 96%);
 
-    --primary: 265 80% 65%;
-    --primary-foreground: 0 0% 100%;
+  --color-primary: hsl(265 80% 65%);
+  --color-primary-foreground: hsl(0 0% 100%);
 
-    --secondary: 240 10% 14%;
-    --secondary-foreground: 280 20% 96%;
+  --color-secondary: hsl(240 10% 14%);
+  --color-secondary-foreground: hsl(280 20% 96%);
 
-    --muted: 240 10% 14%;
-    --muted-foreground: 240 8% 55%;
+  --color-muted: hsl(240 10% 14%);
+  --color-muted-foreground: hsl(240 8% 55%);
 
-    --accent: 45 93% 55%;
-    --accent-foreground: 0 0% 0%;
+  --color-accent: hsl(45 93% 55%);
+  --color-accent-foreground: hsl(0 0% 0%);
 
-    --destructive: 0 84% 60%;
-    --destructive-foreground: 0 0% 98%;
+  --color-destructive: hsl(0 84% 60%);
+  --color-destructive-foreground: hsl(0 0% 98%);
 
-    --border: 240 10% 16%;
-    --input: 240 10% 16%;
-    --ring: 265 80% 65%;
+  --color-border: hsl(240 10% 16%);
+  --color-input: hsl(240 10% 16%);
+  --color-ring: hsl(265 80% 65%);
 
-    --radius: 0.75rem;
+  --radius: 0.75rem;
 
-    --violet: 265 80% 65%;
-    --violet-dark: 265 80% 45%;
-    --gold: 45 93% 55%;
-    --rose: 330 80% 65%;
-  }
+  --color-violet: hsl(265 80% 65%);
+  --color-violet-dark: hsl(265 80% 45%);
+  --color-gold: hsl(45 93% 55%);
+  --color-rose: hsl(330 80% 65%);
 }
 
 @layer base {
@@ -77,11 +73,11 @@
   }
 
   .text-studio-gold {
-    color: hsl(var(--gold));
+    color: hsl(var(--color-gold));
   }
 
   .studio-rose {
-    color: hsl(var(--rose));
+    color: hsl(var(--color-rose));
   }
 
   .glow-violet {
